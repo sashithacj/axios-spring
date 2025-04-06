@@ -1,6 +1,6 @@
 {
   "name": "axios-spring",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Automatic token refresh for Axios with JWT support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,7 +33,7 @@
     "url": "https://github.com/sashithacj"
   },
   "license": "MIT",
-  "peerDependencies": {
+  "dependencies": {
     "axios": "^1.8.4"
   },
   "devDependencies": {
@@ -42,6 +42,11 @@
     "prettier": "^3.5.3",
     "ts-jest": "^29.3.1",
     "typescript": "^5.8.3"
+  },
+  "peerDependenciesMeta": {
+    "@react-native-async-storage/async-storage": {
+      "optional": true
+    }
   },
   "optionalDependencies": {
     "@react-native-async-storage/async-storage": "^2.1.2"

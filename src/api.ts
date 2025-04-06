@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import Storage from './storage';
+import { decode, JwtPayload } from 'jsonwebtoken';
 
 type FailedRequest = {
   resolve: (token: string) => void;
@@ -11,9 +12,11 @@ let isRefreshing = false;
 
 function decodeJWT(token: string): { exp: number } | null {
   try {
-    const payload = token.split('.')[1];
-    const decoded = atob(payload);
-    return JSON.parse(decoded);
+    const decoded = decode(token) as JwtPayload | null;
+    if (decoded && typeof decoded.exp === 'number') {
+      return { exp: decoded.exp };
+    }
+    return null;
   } catch {
     return null;
   }

@@ -101,7 +101,7 @@ Your backend refresh endpoint should:
 
 ## Notes
 
-1. Designed to work seamlessly with Spring Boot JWT authentication
+1. Designed to work seamlessly with JWT authentication
 2. The package assumes your tokens are JWT format for expiration checking
 3. The token refresh queue ensures no duplicate refresh requests are made
 4. You must manage token storage in your application code

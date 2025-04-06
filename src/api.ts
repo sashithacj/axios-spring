@@ -33,7 +33,7 @@ async function refreshAuthToken(
   storageAccessTokenKey: string,
   storageRefreshTokenKey: string,
 ): Promise<{ accessToken: string; refreshToken: string }> {
-  const refreshToken = await Storage.getItem('refreshToken');
+  const refreshToken = await Storage.getItem(storageRefreshTokenKey);
   if (!refreshToken) throw new Error('No refresh token available');
 
   const response = await axios.post(refreshEndpointUrl, { refreshToken });

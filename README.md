@@ -28,38 +28,55 @@ yarn add axios-spring
 ## Basic Setup
 
 ```typescript
+// utils/api.ts
 import { initializeApiInstance } from 'axios-spring';
 
 // Create the instance
-export const API = initializeApiInstance({
+const API = initializeApiInstance({
   baseUrl: 'https://your-api.com/v1/',
   refreshEndpoint: 'auth/refresh',
   tokenExpiryBufferSeconds: 30, // optional, default is 30
   reactOn401Responses: true, // optional, default is true
 });
+
+export default API;
 ```
 
 ## Making Requests
 
 ```typescript
 // Import the instance from where you have created
-import { API } from '/app.tsx';
+import API from '@/utils/api';
 
-// Example GET request
-const response = await API.get('/users');
+// Login and store tokens
+const login = async (email: string, password: string) => {
+  const response = await API.post('/auth/login', { email, password });
+  const { accessToken, refreshToken } = response.data;
+  await API.setAuthTokens(accessToken, refreshToken);
+};
 
-// Example POST request
-const createResponse = await API.post('/users', { name: 'John Doe' });
+// Make an authenticated request
+const getProfile = async () => {
+  const response = await API.get('/users/me');
+  console.log(response.data);
+};
+
+// Logout and remove stored tokens
+const logout = async () => {
+  await API.deleteAuthTokens();
+};
 ```
 
 ## Configuration Options
 
-| Parameter                  | Type    | Required | Default | Description                                       |
-| -------------------------- | ------- | -------- | ------- | ------------------------------------------------- |
-| `baseUrl`                  | string  | Yes      | -       | The base URL for your API                         |
-| `refreshEndpoint`          | string  | Yes      | -       | The endpoint path for refreshing tokens           |
-| `tokenExpiryBufferSeconds` | number  | No       | 30      | Seconds before expiration to refresh token        |
-| `reactOn401Responses`      | boolean | No       | true    | Whether to attempt token refresh on 401 responses |
+| Parameter                  | Type    | Required | Default                     | Description                                                                                              |
+| -------------------------- | ------- | -------- | --------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `baseUrl`                  | string  | Yes      | -                           | The base URL for your API                                                                                |
+| `refreshEndpoint`          | string  | Yes      | -                           | The endpoint path for refreshing tokens                                                                  |
+| `tokenExpiryBufferSeconds` | number  | No       | 30                          | Seconds before expiration to refresh token                                                               |
+| `reactOn401Responses`      | boolean | No       | true                        | Whether to attempt token refresh on 401 responses                                                        |
+| `storageAccessTokenKey`    | string  | No       | @axios-spring-access-token  | Storage key using to save the access token. This would be useful if you are managing multiple sessions.  |
+| `storageRefreshTokenKey`   | string  | No       | @axios-spring-refresh-token | Storage key using to save the refresh token. This would be useful if you are managing multiple sessions. |
 
 ## Refresh Token Endpoint Requirements
 

@@ -5,6 +5,13 @@ export interface InitializeOptions {
   refreshEndpoint: string;
   tokenExpiryBufferSeconds?: number;
   reactOn401Responses?: boolean;
+  storageAccessTokenKey?: string;
+  storageRefreshTokenKey?: string;
 }
 
-export function initializeApiInstance(options: InitializeOptions): AxiosInstance;
+export interface AxiosSpringInstance extends AxiosInstance {
+  setAuthTokens: (accessToken: string, refreshToken: string) => Promise<void>;
+  deleteAuthTokens: () => Promise<void>;
+}
+
+export function initializeApiInstance(options: InitializeOptions): AxiosSpringInstance;

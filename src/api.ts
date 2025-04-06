@@ -27,6 +27,8 @@ function joinUrl(baseUrl: string, path: string): string {
 
 async function refreshAuthToken(
   refreshEndpointUrl: string,
+  storageAccessTokenKey: string,
+  storageRefreshTokenKey: string,
 ): Promise<{ accessToken: string; refreshToken: string }> {
   const refreshToken = await Storage.getItem('refreshToken');
   if (!refreshToken) throw new Error('No refresh token available');
@@ -34,8 +36,8 @@ async function refreshAuthToken(
   const response = await axios.post(refreshEndpointUrl, { refreshToken });
   const { accessToken, refreshToken: newRefreshToken } = response.data;
 
-  await Storage.setItem('accessToken', accessToken);
-  await Storage.setItem('refreshToken', newRefreshToken);
+  await Storage.setItem(storageAccessTokenKey, accessToken);
+  await Storage.setItem(storageRefreshTokenKey, newRefreshToken);
 
   return { accessToken, refreshToken: newRefreshToken };
 }
@@ -45,6 +47,16 @@ interface InitializeOptions {
   refreshEndpoint: string;
   tokenExpiryBufferSeconds?: number;
   reactOn401Responses?: boolean;
+  storageAccessTokenKey?: string;
+  storageRefreshTokenKey?: string;
+}
+
+const ACCESS_KEY = Symbol('accessTokenKey');
+const REFRESH_KEY = Symbol('refreshTokenKey');
+
+interface AxiosSpringInstance extends AxiosInstance {
+  setAuthTokens: (accessToken: string, refreshToken: string) => Promise<void>;
+  deleteAuthTokens: () => Promise<void>;
 }
 
 export function initializeApiInstance({
@@ -52,13 +64,32 @@ export function initializeApiInstance({
   refreshEndpoint,
   tokenExpiryBufferSeconds = 30,
   reactOn401Responses = true,
-}: InitializeOptions): AxiosInstance {
-  const API = axios.create({ baseURL: baseUrl });
+  storageAccessTokenKey = '@axios-spring-access-token',
+  storageRefreshTokenKey = '@axios-spring-refresh-token',
+}: InitializeOptions): AxiosSpringInstance {
+  const API = axios.create({ baseURL: baseUrl }) as AxiosSpringInstance;
   const refreshEndpointUrl = joinUrl(baseUrl, refreshEndpoint);
+
+  (API as any)[ACCESS_KEY] = storageAccessTokenKey;
+  (API as any)[REFRESH_KEY] = storageRefreshTokenKey;
+
+  API.setAuthTokens = async (accessToken: string, refreshToken: string) => {
+    const accessKey = (API as any)[ACCESS_KEY];
+    const refreshKey = (API as any)[REFRESH_KEY];
+    await Storage.setItem(accessKey, accessToken);
+    await Storage.setItem(refreshKey, refreshToken);
+  };
+
+  API.deleteAuthTokens = async () => {
+    const accessKey = (API as any)[ACCESS_KEY];
+    const refreshKey = (API as any)[REFRESH_KEY];
+    await Storage.removeItem(accessKey);
+    await Storage.removeItem(refreshKey);
+  };
 
   API.interceptors.request.use(
     async (config) => {
-      let accessToken = await Storage.getItem('accessToken');
+      let accessToken = await Storage.getItem(storageAccessTokenKey);
 
       if (accessToken) {
         const decoded = decodeJWT(accessToken);
@@ -71,7 +102,11 @@ export function initializeApiInstance({
             if (!isRefreshing) {
               isRefreshing = true;
               try {
-                const { accessToken: newAccessToken } = await refreshAuthToken(refreshEndpointUrl);
+                const { accessToken: newAccessToken } = await refreshAuthToken(
+                  refreshEndpointUrl,
+                  storageAccessTokenKey,
+                  storageRefreshTokenKey,
+                );
                 accessToken = newAccessToken;
                 failedRequestsQueue.forEach(({ resolve }) => resolve(newAccessToken));
                 failedRequestsQueue = [];
@@ -123,18 +158,20 @@ export function initializeApiInstance({
           isRefreshing = true;
 
           try {
-            const { accessToken: newAccessToken } = await refreshAuthToken(refreshEndpointUrl);
+            const { accessToken: newAccessToken } = await refreshAuthToken(
+              refreshEndpointUrl,
+              storageAccessTokenKey,
+              storageRefreshTokenKey,
+            );
 
-            await Storage.setItem('accessToken', newAccessToken);
             originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
-
             failedRequestsQueue.forEach(({ resolve }) => resolve(newAccessToken));
             failedRequestsQueue = [];
 
             return API(originalRequest);
           } catch (err) {
-            await Storage.removeItem('accessToken');
-            await Storage.removeItem('refreshToken');
+            await Storage.removeItem(storageAccessTokenKey);
+            await Storage.removeItem(storageRefreshTokenKey);
 
             failedRequestsQueue.forEach(({ reject }) => reject(err));
             failedRequestsQueue = [];

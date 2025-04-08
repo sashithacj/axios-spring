@@ -48,6 +48,10 @@ async function refreshAuthToken(
   const response = await axios.post(refreshEndpointUrl, { refreshToken });
   const { accessToken, refreshToken: newRefreshToken } = response.data;
 
+  if (!accessToken || !newRefreshToken) {
+    throw new Error('Invalid refreshEndpoint response');
+  }
+
   await Storage.setItem(storageAccessTokenKey, accessToken);
   await Storage.setItem(storageRefreshTokenKey, newRefreshToken);
 

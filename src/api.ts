@@ -105,23 +105,6 @@ async function ensureFreshAccessToken(
   }
 }
 
-/**
- * Initializes a customized Axios instance with token management (including refresh),
- * automatic authorization handling, and response handling for 401 errors.
- *
- * @param {InitializeOptions} options - Configuration options for the API setup.
- * @param {string} options.baseUrl - The base URL of the API that the Axios instance will communicate with.
- * @param {string} options.refreshEndpoint - The endpoint URL used to refresh the access token.
- * @param {number} [options.tokenExpiryBufferSeconds=30] - A buffer period in seconds before the access token expires to trigger automatic refresh. Defaults to 30 seconds.
- * @param {boolean} [options.reactOn401Responses=true] - Whether to automatically react to HTTP 401 responses by attempting to refresh the token and retrying the request. Defaults to true.
- * @param {string} [options.storageAccessTokenKey='@axios-spring-access-token'] - The storage key to store the access token (defaults to '@axios-spring-access-token').
- * @param {string} [options.storageRefreshTokenKey='@axios-spring-refresh-token'] - The storage key to store the refresh token (defaults to '@axios-spring-refresh-token').
- *
- * @returns {AxiosSpringInstance} - A customized Axios instance that supports token management and automatic 401 error handling. This instance has additional methods:
- *   - `setAuthTokens`: Set access and refresh tokens.
- *   - `deleteAuthTokens`: Remove access and refresh tokens.
- *   - `isAuthenticated`: Check if the user is authenticated by verifying the access token.
- */
 export function initializeApiInstance({
   baseUrl,
   refreshEndpoint,
@@ -129,9 +112,17 @@ export function initializeApiInstance({
   reactOn401Responses = true,
   storageAccessTokenKey = '@axios-spring-access-token',
   storageRefreshTokenKey = '@axios-spring-refresh-token',
+  attachAccessTokenToRequest: customAttachFn,
 }: InitializeOptions): AxiosSpringInstance {
   const API = axios.create({ baseURL: baseUrl }) as AxiosSpringInstance;
   const refreshEndpointUrl = joinUrl(baseUrl, refreshEndpoint);
+  const attachAccessTokenToRequest =
+    customAttachFn ??
+    ((config, accessToken) => {
+      if (!config.headers) config.headers = {};
+      config.headers['Authorization'] = `Bearer ${accessToken}`;
+      return config;
+    });
 
   refreshingStateMap.set(API, {
     isRefreshing: false,
@@ -180,7 +171,7 @@ export function initializeApiInstance({
         tokenExpiryBufferSeconds,
       );
       if (accessToken) {
-        config.headers['Authorization'] = `Bearer ${accessToken}`;
+        attachAccessTokenToRequest(config, accessToken);
       }
       return config;
     },
@@ -205,7 +196,7 @@ export function initializeApiInstance({
           );
 
           if (token) {
-            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            originalRequest.headers = attachAccessTokenToRequest(originalRequest, token).headers;
             return API(originalRequest);
           }
 

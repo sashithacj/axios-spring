@@ -8,6 +8,7 @@ A smart Axios wrapper with automatic JWT refresh flow built for React Native and
 - Request queuing during token refresh
 - Configurable token expiry buffer
 - 401 response handling with automatic retry
+- Customizable access token attachment
 - TypeScript support
 
 ## How this works
@@ -81,14 +82,37 @@ const logout = async () => {
 
 ## Configuration Options
 
-| Parameter                  | Type    | Required | Default                     | Description                                                                                                       |
-| -------------------------- | ------- | -------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `baseUrl`                  | string  | Yes      | -                           | The base URL of the API that the Axios instance will communicate with.                                            |
-| `refreshEndpoint`          | string  | Yes      | -                           | The endpoint path used to refresh the access token.                                                               |
-| `tokenExpiryBufferSeconds` | number  | No       | 30                          | A buffer period in seconds before the access token expires to trigger automatic refresh.                          |
-| `reactOn401Responses`      | boolean | No       | true                        | Whether to automatically react to HTTP 401 responses by attempting to refresh the token and retrying the request. |
-| `storageAccessTokenKey`    | string  | No       | @axios-spring-access-token  | Storage key using to save the access token. This would be useful if you are managing multiple sessions.           |
-| `storageRefreshTokenKey`   | string  | No       | @axios-spring-refresh-token | Storage key using to save the refresh token. This would be useful if you are managing multiple sessions.          |
+| Parameter                    | Type                                                              | Required | Default                                                | Description                                                                                                                                             |
+| ---------------------------- | ----------------------------------------------------------------- | -------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `baseUrl`                    | string                                                            | Yes      | -                                                      | The base URL of the API that the Axios instance will communicate with.                                                                                  |
+| `refreshEndpoint`            | string                                                            | Yes      | -                                                      | The endpoint path used to refresh the access token.                                                                                                     |
+| `tokenExpiryBufferSeconds`   | number                                                            | No       | 30                                                     | A buffer period in seconds before the access token expires to trigger automatic refresh.                                                                |
+| `reactOn401Responses`        | boolean                                                           | No       | true                                                   | Whether to automatically react to HTTP 401 responses by attempting to refresh the token and retrying the request.                                       |
+| `storageAccessTokenKey`      | string                                                            | No       | @axios-spring-access-token                             | Storage key using to save the access token. This would be useful if you are managing multiple sessions.                                                 |
+| `storageRefreshTokenKey`     | string                                                            | No       | @axios-spring-refresh-token                            | Storage key using to save the refresh token. This would be useful if you are managing multiple sessions.                                                |
+| `attachAccessTokenToRequest` | (config: AxiosRequestConfig, token: string) => AxiosRequestConfig | No       | Adds `Authorization: Bearer <token>` header by default | Custom function to attach the access token to the Axios request. Useful if you need to attach it differently (e.g., in custom headers or query params). |
+
+## Custom Token Attachment (attachAccessTokenToRequest)
+
+By default, `axios-spring` adds the access token to the `Authorization` header using the `Bearer` scheme. However, if your backend expects the token in a different location (e.g., custom headers, query parameters), you can provide your own function.
+
+```typescript
+import { initializeApiInstance, AxiosRequestConfig } from 'axios-spring';
+
+const API = initializeApiInstance({
+  baseUrl: 'https://your-api.com/v1/',
+  refreshEndpoint: 'auth/refresh',
+  attachAccessTokenToRequest: (config: AxiosRequestConfig, token: string): AxiosRequestConfig => {
+    config.headers = {
+      ...config.headers,
+      'x-auth-token': token, // Attach token to a custom header
+    };
+    return config;
+  },
+});
+
+export default API;
+```
 
 ## Refresh Token Endpoint Requirements
 

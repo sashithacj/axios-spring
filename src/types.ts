@@ -1,5 +1,7 @@
-import { AxiosInstance } from 'axios';
+import { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { JwtPayload } from 'jsonwebtoken';
+export { AxiosRequestConfig } from 'axios';
+export { JwtPayload } from 'jsonwebtoken';
 
 export interface InitializeOptions {
   baseUrl: string;
@@ -8,6 +10,10 @@ export interface InitializeOptions {
   reactOn401Responses?: boolean;
   storageAccessTokenKey?: string;
   storageRefreshTokenKey?: string;
+  attachAccessTokenToRequest?: (
+    config: AxiosRequestConfig,
+    accessToken: string,
+  ) => AxiosRequestConfig;
 }
 
 export interface AxiosSpringInstance extends AxiosInstance {

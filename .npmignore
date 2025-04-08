@@ -1,0 +1,17 @@
+# Don't publish source and tests
+src/
+__mocks__/
+__tests__/
+*.test.ts
+*.test.js
+
+# Ignore config and dev files
+tsconfig.json
+jest.config.js
+.prettierrc
+.prettierignore
+.eslintrc
+*.log
+
+# Don't include node_modules (excluded by default, but safe to specify)
+node_modules/

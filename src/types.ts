@@ -15,5 +15,3 @@ export interface AxiosSpringInstance extends AxiosInstance {
   deleteAuthTokens: () => Promise<void>;
   isAuthenticated: () => Promise<JwtPayload | null>;
 }
-
-export function initializeApiInstance(options: InitializeOptions): AxiosSpringInstance;

@@ -56,6 +56,7 @@ const login = async (email: string, password: string) => {
   console.log('Login successful, tokens stored.');
 };
 
+// Checks whether user has a valid access token
 const checkAuthentication = async () => {
   const jwtPayload = await API.isAuthenticated();
   if (jwtPayload) {

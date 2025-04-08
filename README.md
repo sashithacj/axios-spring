@@ -53,6 +53,16 @@ const login = async (email: string, password: string) => {
   const response = await API.post('/auth/login', { email, password });
   const { accessToken, refreshToken } = response.data;
   await API.setAuthTokens(accessToken, refreshToken);
+  console.log('Login successful, tokens stored.');
+};
+
+const checkAuthentication = async () => {
+  const jwtPayload = await API.isAuthenticated();
+  if (jwtPayload) {
+    console.log('User is authenticated:', jwtPayload); // Log the JWT payload
+  } else {
+    console.log('User is not authenticated');
+  }
 };
 
 // Make an authenticated request
@@ -64,19 +74,20 @@ const getProfile = async () => {
 // Logout and remove stored tokens
 const logout = async () => {
   await API.deleteAuthTokens();
+  console.log('Logged out and tokens removed');
 };
 ```
 
 ## Configuration Options
 
-| Parameter                  | Type    | Required | Default                     | Description                                                                                              |
-| -------------------------- | ------- | -------- | --------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `baseUrl`                  | string  | Yes      | -                           | The base URL for your API                                                                                |
-| `refreshEndpoint`          | string  | Yes      | -                           | The endpoint path for refreshing tokens                                                                  |
-| `tokenExpiryBufferSeconds` | number  | No       | 30                          | Seconds before expiration to refresh token                                                               |
-| `reactOn401Responses`      | boolean | No       | true                        | Whether to attempt token refresh on 401 responses                                                        |
-| `storageAccessTokenKey`    | string  | No       | @axios-spring-access-token  | Storage key using to save the access token. This would be useful if you are managing multiple sessions.  |
-| `storageRefreshTokenKey`   | string  | No       | @axios-spring-refresh-token | Storage key using to save the refresh token. This would be useful if you are managing multiple sessions. |
+| Parameter                  | Type    | Required | Default                     | Description                                                                                                       |
+| -------------------------- | ------- | -------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `baseUrl`                  | string  | Yes      | -                           | The base URL of the API that the Axios instance will communicate with.                                            |
+| `refreshEndpoint`          | string  | Yes      | -                           | The endpoint path used to refresh the access token.                                                               |
+| `tokenExpiryBufferSeconds` | number  | No       | 30                          | A buffer period in seconds before the access token expires to trigger automatic refresh.                          |
+| `reactOn401Responses`      | boolean | No       | true                        | Whether to automatically react to HTTP 401 responses by attempting to refresh the token and retrying the request. |
+| `storageAccessTokenKey`    | string  | No       | @axios-spring-access-token  | Storage key using to save the access token. This would be useful if you are managing multiple sessions.           |
+| `storageRefreshTokenKey`   | string  | No       | @axios-spring-refresh-token | Storage key using to save the refresh token. This would be useful if you are managing multiple sessions.          |
 
 ## Refresh Token Endpoint Requirements
 
@@ -113,4 +124,5 @@ Special thanks to:
 
 - The [Axios team](https://github.com/axios/axios) for the excellent HTTP client
 - The team behind [`@react-native-async-storage/async-storage`](https://github.com/react-native-async-storage/async-storage) for providing secure, persistent storage in React Native
-- All contributors and users
+- The [JSON Web Token (jsonwebtoken)](https://github.com/auth0/node-jsonwebtoken) project for enabling secure and compact token-based authentication
+- All contributors and users for their continuous support and feedback

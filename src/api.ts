@@ -45,6 +45,55 @@ async function refreshAuthToken(
   return { accessToken, refreshToken: newRefreshToken };
 }
 
+async function ensureFreshAccessToken(
+  accessKey: string,
+  refreshKey: string,
+  refreshEndpointUrl: string,
+  bufferSeconds: number = 30,
+): Promise<string | null> {
+  let accessToken = await Storage.getItem(accessKey);
+  if (!accessToken) return null;
+
+  const decoded = decodeJWT(accessToken);
+  const currentTime = Math.floor(Date.now() / 1000);
+
+  if (!decoded) return null;
+
+  const timeLeft = decoded.exp - currentTime;
+
+  if (timeLeft > bufferSeconds) return accessToken;
+
+  if (!isRefreshing) {
+    isRefreshing = true;
+    try {
+      const { accessToken: newAccessToken } = await refreshAuthToken(
+        refreshEndpointUrl,
+        accessKey,
+        refreshKey,
+      );
+      accessToken = newAccessToken;
+      failedRequestsQueue.forEach(({ resolve }) => resolve(newAccessToken));
+      failedRequestsQueue = [];
+      return newAccessToken;
+    } catch (err) {
+      failedRequestsQueue.forEach(({ reject }) => reject(err));
+      failedRequestsQueue = [];
+      return null;
+    } finally {
+      isRefreshing = false;
+    }
+  } else {
+    try {
+      accessToken = await new Promise<string>((resolve, reject) => {
+        failedRequestsQueue.push({ resolve, reject });
+      });
+      return accessToken;
+    } catch {
+      return null;
+    }
+  }
+}
+
 interface InitializeOptions {
   baseUrl: string;
   refreshEndpoint: string;
@@ -60,6 +109,7 @@ const REFRESH_KEY = Symbol('refreshTokenKey');
 interface AxiosSpringInstance extends AxiosInstance {
   setAuthTokens: (accessToken: string, refreshToken: string) => Promise<void>;
   deleteAuthTokens: () => Promise<void>;
+  isAuthenticated: () => Promise<JwtPayload | null>;
 }
 
 export function initializeApiInstance({
@@ -90,52 +140,34 @@ export function initializeApiInstance({
     await Storage.removeItem(refreshKey);
   };
 
+  API.isAuthenticated = async () => {
+    const accessKey = (API as any)[ACCESS_KEY];
+    const refreshKey = (API as any)[REFRESH_KEY];
+    const accessToken = await ensureFreshAccessToken(
+      accessKey,
+      refreshKey,
+      refreshEndpointUrl,
+      tokenExpiryBufferSeconds,
+    );
+    if (!accessToken) return null;
+    const decoded = decodeJWT(accessToken);
+    return decoded ?? null;
+  };
+
   API.interceptors.request.use(
     async (config) => {
-      let accessToken = await Storage.getItem(storageAccessTokenKey);
-
+      const accessToken = await ensureFreshAccessToken(
+        storageAccessTokenKey,
+        storageRefreshTokenKey,
+        refreshEndpointUrl,
+        tokenExpiryBufferSeconds,
+      );
       if (accessToken) {
-        const decoded = decodeJWT(accessToken);
-        const currentTime = Math.floor(Date.now() / 1000);
-
-        if (decoded) {
-          const timeLeft = decoded.exp - currentTime;
-
-          if (timeLeft <= tokenExpiryBufferSeconds) {
-            if (!isRefreshing) {
-              isRefreshing = true;
-              try {
-                const { accessToken: newAccessToken } = await refreshAuthToken(
-                  refreshEndpointUrl,
-                  storageAccessTokenKey,
-                  storageRefreshTokenKey,
-                );
-                accessToken = newAccessToken;
-                failedRequestsQueue.forEach(({ resolve }) => resolve(newAccessToken));
-                failedRequestsQueue = [];
-              } catch (err) {
-                failedRequestsQueue.forEach(({ reject }) => reject(err));
-                failedRequestsQueue = [];
-                throw err;
-              } finally {
-                isRefreshing = false;
-              }
-            } else {
-              accessToken = await new Promise<string>((resolve, reject) => {
-                failedRequestsQueue.push({ resolve, reject });
-              });
-            }
-          }
-        }
-
         config.headers['Authorization'] = `Bearer ${accessToken}`;
       }
-
       return config;
     },
-    (error) => {
-      return Promise.reject(error);
-    },
+    (error) => Promise.reject(error),
   );
 
   if (reactOn401Responses) {
@@ -145,44 +177,21 @@ export function initializeApiInstance({
         const originalRequest = error.config;
 
         if (error.response?.status === 401 && !originalRequest._retry) {
-          if (isRefreshing) {
-            return new Promise((resolve, reject) => {
-              failedRequestsQueue.push({
-                resolve: (token) => {
-                  originalRequest.headers['Authorization'] = `Bearer ${token}`;
-                  resolve(API(originalRequest));
-                },
-                reject,
-              });
-            });
-          }
-
           originalRequest._retry = true;
-          isRefreshing = true;
 
-          try {
-            const { accessToken: newAccessToken } = await refreshAuthToken(
-              refreshEndpointUrl,
-              storageAccessTokenKey,
-              storageRefreshTokenKey,
-            );
+          const token = await ensureFreshAccessToken(
+            storageAccessTokenKey,
+            storageRefreshTokenKey,
+            refreshEndpointUrl,
+            0,
+          );
 
-            originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
-            failedRequestsQueue.forEach(({ resolve }) => resolve(newAccessToken));
-            failedRequestsQueue = [];
-
+          if (token) {
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
             return API(originalRequest);
-          } catch (err) {
-            await Storage.removeItem(storageAccessTokenKey);
-            await Storage.removeItem(storageRefreshTokenKey);
-
-            failedRequestsQueue.forEach(({ reject }) => reject(err));
-            failedRequestsQueue = [];
-
-            return Promise.reject(err);
-          } finally {
-            isRefreshing = false;
           }
+
+          return Promise.reject(error);
         }
 
         return Promise.reject(error);

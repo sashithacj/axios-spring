@@ -1,4 +1,5 @@
 import { AxiosInstance } from 'axios';
+import { JwtPayload } from 'jsonwebtoken';
 
 export interface InitializeOptions {
   baseUrl: string;
@@ -12,6 +13,7 @@ export interface InitializeOptions {
 export interface AxiosSpringInstance extends AxiosInstance {
   setAuthTokens: (accessToken: string, refreshToken: string) => Promise<void>;
   deleteAuthTokens: () => Promise<void>;
+  isAuthenticated: () => Promise<JwtPayload | null>;
 }
 
 export function initializeApiInstance(options: InitializeOptions): AxiosSpringInstance;

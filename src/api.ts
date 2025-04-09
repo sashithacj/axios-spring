@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import Storage from './storage';
 import { decode, JwtPayload } from 'jsonwebtoken';
 import { AxiosSpringInstance, InitializeOptions } from './types';
@@ -6,6 +6,21 @@ import { AxiosSpringInstance, InitializeOptions } from './types';
 type FailedRequest = {
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
+};
+
+type RefreshConfig = {
+  accessKey: string;
+  refreshKey: string;
+  refreshEndpointUrl: string;
+  tokenExpiryBufferSeconds: number;
+  attachRefreshTokenToRequest: (
+    config: AxiosRequestConfig,
+    refreshToken: string,
+  ) => AxiosRequestConfig;
+  extractTokensFromResponse: (response: AxiosResponse) => {
+    accessToken: string;
+    refreshToken: string;
+  };
 };
 
 const ACCESS_KEY = Symbol('accessTokenKey');
@@ -38,33 +53,44 @@ function joinUrl(baseUrl: string, path: string): string {
 }
 
 async function refreshAuthToken(
-  refreshEndpointUrl: string,
-  storageAccessTokenKey: string,
-  storageRefreshTokenKey: string,
+  refreshAuthTokenConfig: RefreshConfig,
 ): Promise<{ accessToken: string; refreshToken: string }> {
-  const refreshToken = await Storage.getItem(storageRefreshTokenKey);
+  const {
+    accessKey,
+    refreshKey,
+    refreshEndpointUrl,
+    attachRefreshTokenToRequest,
+    extractTokensFromResponse,
+  } = refreshAuthTokenConfig;
+  const refreshToken = await Storage.getItem(refreshKey);
   if (!refreshToken) throw new Error('No refresh token available');
 
-  const response = await axios.post(refreshEndpointUrl, { refreshToken });
-  const { accessToken, refreshToken: newRefreshToken } = response.data;
+  const config = attachRefreshTokenToRequest(
+    {
+      method: 'post',
+      url: refreshEndpointUrl,
+    },
+    refreshToken,
+  );
+
+  const response = await axios.request(config);
+  const { accessToken, refreshToken: newRefreshToken } = extractTokensFromResponse(response);
 
   if (!accessToken || !newRefreshToken) {
     throw new Error('Invalid refreshEndpoint response');
   }
 
-  await Storage.setItem(storageAccessTokenKey, accessToken);
-  await Storage.setItem(storageRefreshTokenKey, newRefreshToken);
+  await Storage.setItem(accessKey, accessToken);
+  await Storage.setItem(refreshKey, newRefreshToken);
 
   return { accessToken, refreshToken: newRefreshToken };
 }
 
 async function ensureFreshAccessToken(
   API: AxiosSpringInstance,
-  accessKey: string,
-  refreshKey: string,
-  refreshEndpointUrl: string,
-  bufferSeconds: number = 30,
+  refreshAuthTokenConfig: RefreshConfig,
 ): Promise<string | null> {
+  const { accessKey, tokenExpiryBufferSeconds } = refreshAuthTokenConfig;
   let accessToken = await Storage.getItem(accessKey);
   if (!accessToken) return null;
 
@@ -76,16 +102,12 @@ async function ensureFreshAccessToken(
   const timeLeft = decoded.exp - currentTime;
   const state = refreshingStateMap.get(API)!;
 
-  if (timeLeft > bufferSeconds) return accessToken;
+  if (timeLeft > tokenExpiryBufferSeconds) return accessToken;
 
   if (!state.isRefreshing) {
     state.isRefreshing = true;
     try {
-      const { accessToken: newAccessToken } = await refreshAuthToken(
-        refreshEndpointUrl,
-        accessKey,
-        refreshKey,
-      );
+      const { accessToken: newAccessToken } = await refreshAuthToken(refreshAuthTokenConfig);
       accessToken = newAccessToken;
       state.failedRequestsQueue.forEach(({ resolve }) => resolve(newAccessToken));
       state.failedRequestsQueue = [];
@@ -116,16 +138,35 @@ export function initializeApiInstance({
   reactOn401Responses = true,
   storageAccessTokenKey = '@axios-spring-access-token',
   storageRefreshTokenKey = '@axios-spring-refresh-token',
-  attachAccessTokenToRequest: customAttachFn,
+  attachAccessTokenToRequest: customAccessTokenAttachFn,
+  attachRefreshTokenToRequest: customRefreshTokenAttachFn,
+  extractTokensFromResponse: customTokensExtractFn,
 }: InitializeOptions): AxiosSpringInstance {
   const API = axios.create({ baseURL: baseUrl }) as AxiosSpringInstance;
   const refreshEndpointUrl = joinUrl(baseUrl, refreshEndpoint);
+
   const attachAccessTokenToRequest =
-    customAttachFn ??
+    customAccessTokenAttachFn ??
     ((config, accessToken) => {
       if (!config.headers) config.headers = {};
       config.headers['Authorization'] = `Bearer ${accessToken}`;
       return config;
+    });
+
+  const attachRefreshTokenToRequest =
+    customRefreshTokenAttachFn ??
+    ((config, refreshToken) => {
+      config.data = { refreshToken };
+      return config;
+    });
+
+  const extractTokensFromResponse =
+    customTokensExtractFn ??
+    ((response) => {
+      return {
+        accessToken: response?.data?.accessToken,
+        refreshToken: response?.data?.refreshToken,
+      };
     });
 
   refreshingStateMap.set(API, {
@@ -153,13 +194,14 @@ export function initializeApiInstance({
   API.isAuthenticated = async () => {
     const accessKey = (API as any)[ACCESS_KEY];
     const refreshKey = (API as any)[REFRESH_KEY];
-    const accessToken = await ensureFreshAccessToken(
-      API,
+    const accessToken = await ensureFreshAccessToken(API, {
       accessKey,
       refreshKey,
       refreshEndpointUrl,
       tokenExpiryBufferSeconds,
-    );
+      attachRefreshTokenToRequest,
+      extractTokensFromResponse,
+    });
     if (!accessToken) return null;
     const decoded = decodeJWT(accessToken);
     return decoded ?? null;
@@ -167,13 +209,14 @@ export function initializeApiInstance({
 
   API.interceptors.request.use(
     async (config) => {
-      const accessToken = await ensureFreshAccessToken(
-        API,
-        storageAccessTokenKey,
-        storageRefreshTokenKey,
+      const accessToken = await ensureFreshAccessToken(API, {
+        accessKey: storageAccessTokenKey,
+        refreshKey: storageRefreshTokenKey,
         refreshEndpointUrl,
         tokenExpiryBufferSeconds,
-      );
+        attachRefreshTokenToRequest,
+        extractTokensFromResponse,
+      });
       if (accessToken) {
         attachAccessTokenToRequest(config, accessToken);
       }
@@ -191,13 +234,14 @@ export function initializeApiInstance({
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
 
-          const token = await ensureFreshAccessToken(
-            API,
-            storageAccessTokenKey,
-            storageRefreshTokenKey,
+          const token = await ensureFreshAccessToken(API, {
+            accessKey: storageAccessTokenKey,
+            refreshKey: storageRefreshTokenKey,
             refreshEndpointUrl,
-            0,
-          );
+            tokenExpiryBufferSeconds: 0,
+            attachRefreshTokenToRequest,
+            extractTokensFromResponse,
+          });
 
           if (token) {
             originalRequest.headers = attachAccessTokenToRequest(originalRequest, token).headers;

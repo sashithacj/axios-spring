@@ -1,6 +1,6 @@
-import { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { JwtPayload } from 'jsonwebtoken';
-export { AxiosRequestConfig } from 'axios';
+export { AxiosRequestConfig, AxiosResponse } from 'axios';
 export { JwtPayload } from 'jsonwebtoken';
 
 export interface InitializeOptions {
@@ -14,6 +14,14 @@ export interface InitializeOptions {
     config: AxiosRequestConfig,
     accessToken: string,
   ) => AxiosRequestConfig;
+  attachRefreshTokenToRequest?: (
+    config: AxiosRequestConfig,
+    refreshToken: string,
+  ) => AxiosRequestConfig;
+  extractTokensFromResponse?: (response: AxiosResponse) => {
+    accessToken: string;
+    refreshToken: string;
+  };
 }
 
 export interface AxiosSpringInstance extends AxiosInstance {

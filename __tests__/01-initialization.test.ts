@@ -8,14 +8,14 @@ describe('Group 1: Initialization & Configuration', () => {
     resetTestEnvironment();
   });
 
-  it('1.1 initializes API instance with default config', () => {
+  it('✅ initializes API instance with default config', () => {
     const api = createTestApi();
     expect(api).toHaveProperty('setAuthTokens');
     expect(api).toHaveProperty('deleteAuthTokens');
     expect(api).toHaveProperty('isAuthenticated');
   });
 
-  it('1.2 initializes with custom token keys', async () => {
+  it('✅ initializes with custom token keys', async () => {
     const accessKey = 'custom-access';
     const refreshKey = 'custom-refresh';
 
@@ -31,7 +31,7 @@ describe('Group 1: Initialization & Configuration', () => {
     expect(Storage.setItem).toHaveBeenCalledWith(refreshKey, 'token2');
   });
 
-  it('1.3A uses custom attachAccessTokenToRequest for authenticated requests', async () => {
+  it('✅ uses custom attachAccessTokenToRequest for authenticated requests', async () => {
     const attachAccessTokenToRequest = jest.fn((config, token) => {
       config.headers = { ...config.headers, 'X-Custom-Auth': token };
       return config;
@@ -51,7 +51,7 @@ describe('Group 1: Initialization & Configuration', () => {
     expect(attachAccessTokenToRequest).toHaveBeenCalled();
   });
 
-  it('1.3B uses custom attachRefreshTokenToRequest during token refresh', async () => {
+  it('✅ uses custom attachRefreshTokenToRequest during token refresh', async () => {
     const attachRefreshTokenToRequest = jest.fn((config, token) => {
       config.data = { customRefresh: token };
       return config;
@@ -77,7 +77,7 @@ describe('Group 1: Initialization & Configuration', () => {
     expect(attachRefreshTokenToRequest).toHaveBeenCalled();
   });
 
-  it('1.4 uses custom extractTokensFromResponse', async () => {
+  it('✅ uses custom extractTokensFromResponse', async () => {
     const extractTokensFromResponse = jest.fn((response) => ({
       accessToken: response?.data?.accessToken,
       refreshToken: response?.data?.refreshToken,
@@ -102,7 +102,7 @@ describe('Group 1: Initialization & Configuration', () => {
     expect(extractTokensFromResponse).toHaveBeenCalled();
   });
 
-  it('1.5 sets internal refreshing state in refreshingStateMap', () => {
+  it('✅ sets internal refreshing state in refreshingStateMap', () => {
     const api = createTestApi();
     const internal =
       (api as any).__proto__.constructor.name === 'Function' ? api : Object.getPrototypeOf(api);
@@ -110,7 +110,7 @@ describe('Group 1: Initialization & Configuration', () => {
     // Can't access WeakMap directly, but the behavior confirms it is initialized (e.g., no crash on request)
   });
 
-  it('1.6 formats refresh endpoint URL correctly', async () => {
+  it('✅ formats refresh endpoint URL correctly', async () => {
     const api1 = initializeApiInstance({
       baseUrl: 'https://api.com',
       refreshEndpoint: '/auth/refresh',

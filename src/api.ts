@@ -141,8 +141,9 @@ export function initializeApiInstance({
   attachAccessTokenToRequest: customAccessTokenAttachFn,
   attachRefreshTokenToRequest: customRefreshTokenAttachFn,
   extractTokensFromResponse: customTokensExtractFn,
+  ...axiosConfigOptions
 }: InitializeOptions): AxiosSpringInstance {
-  const API = axios.create({ baseURL: baseUrl }) as AxiosSpringInstance;
+  const API = axios.create({ ...axiosConfigOptions, baseURL: baseUrl }) as AxiosSpringInstance;
   const refreshEndpointUrl = joinUrl(baseUrl, refreshEndpoint);
 
   const attachAccessTokenToRequest =

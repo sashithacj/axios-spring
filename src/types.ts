@@ -1,9 +1,9 @@
-import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { AxiosInstance, AxiosRequestConfig, AxiosResponse, CreateAxiosDefaults } from 'axios';
 import { JwtPayload } from 'jsonwebtoken';
 export { AxiosRequestConfig, AxiosResponse } from 'axios';
 export { JwtPayload } from 'jsonwebtoken';
 
-export interface InitializeOptions {
+export interface InitializeOptions extends Omit<CreateAxiosDefaults, 'baseURL'> {
   baseUrl: string;
   refreshEndpoint: string;
   tokenExpiryBufferSeconds?: number;

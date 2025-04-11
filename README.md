@@ -15,10 +15,9 @@ A smart Axios wrapper with automatic JWT refresh flow built for React Native and
 
 ## How this works
 
-This package automatically selects the right storage based on your environment:
+This package wraps an Axios instance with automatic JWT authentication and token refreshing logic. When you make a request, it checks if the access token is valid (with a configurable buffer window). If the token is expired, it will automatically attempt to refresh it using the provided refresh token and endpoint. You can also plug in custom logic to attach tokens to requests, extract new tokens from responses, and define exactly how requests should behave during refresh cycles. All tokens are securely stored and reused across requests without you needing to manage them manually.
 
-- React (Web): Uses localStorage in the browser.
-- React Native: Uses [`@react-native-async-storage/async-storage`](https://www.npmjs.com/package/@react-native-async-storage/async-storage) for secure, persistent storage.
+The package is designed to work seamlessly in both web and React Native environments. It detects the runtime and automatically selects the appropriate storage backend: for web apps, it uses localStorage; for React Native, it uses @react-native-async-storage/async-storage. This makes the package ideal for cross-platform projects, giving you the same developer experience with secure token handling and refresh logic regardless of the platform.
 
 ## Installation
 

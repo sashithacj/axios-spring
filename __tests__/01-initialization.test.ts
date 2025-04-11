@@ -131,4 +131,50 @@ describe('Group 1: Initialization & Configuration', () => {
     await api1.isAuthenticated();
     await api2.isAuthenticated();
   });
+
+  it('✅ applies custom axios config like timeout', async () => {
+    const timeout = 1234;
+    const api = initializeApiInstance({
+      baseUrl: 'https://api.test.com',
+      refreshEndpoint: '/auth/refresh',
+      timeout,
+    });
+
+    expect(api.defaults.timeout).toBe(timeout);
+  });
+
+  it('✅ merges user-defined headers into instance config', async () => {
+    const api = initializeApiInstance({
+      baseUrl: 'https://api.test.com',
+      refreshEndpoint: '/auth/refresh',
+      headers: {
+        'X-Test-Header': 'MyValue',
+      },
+    });
+
+    expect(api.defaults.headers?.['X-Test-Header']).toBe('MyValue');
+  });
+
+  it('✅ allows using custom responseType and withCredentials', async () => {
+    const api = initializeApiInstance({
+      baseUrl: 'https://api.test.com',
+      refreshEndpoint: '/auth/refresh',
+      responseType: 'json',
+      withCredentials: true,
+    });
+
+    expect(api.defaults.responseType).toBe('json');
+    expect(api.defaults.withCredentials).toBe(true);
+  });
+
+  it('✅ preserves baseUrl while overriding CreateAxiosDefaults', () => {
+    const api = initializeApiInstance({
+      baseUrl: 'https://api.override.com',
+      refreshEndpoint: '/auth/refresh',
+      timeout: 5000,
+    });
+
+    expect(api.defaults.baseURL).toBe('https://api.override.com');
+    expect(api.defaults.timeout).toBe(5000);
+  });
 });

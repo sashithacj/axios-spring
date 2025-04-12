@@ -1,0 +1,37 @@
+name: Test & Publish on Main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-build-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: Install Dependencies (clean)
+        run: npm ci
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Run Formatter
+        run: npm run format
+
+      - name: Build Package
+        run: npm run build
+
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

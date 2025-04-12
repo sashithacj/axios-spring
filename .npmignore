@@ -1,5 +1,6 @@
 # Don't publish source and tests
 src/
+.github
 __mocks__/
 __tests__/
 *.test.ts

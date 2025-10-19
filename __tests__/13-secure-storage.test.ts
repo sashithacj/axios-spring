@@ -190,7 +190,7 @@ describe('13. Secure Storage Implementation', () => {
 
       await api.setAuthTokens(accessToken, refreshToken);
 
-      // Tokens should be available because JWT expiration (30 days) 
+      // Tokens should be available because JWT expiration (30 days)
       // takes precedence over maxAge (5 minutes)
       const result = await api.isAuthenticated();
       expect(result).not.toBeNull();
@@ -252,7 +252,6 @@ describe('13. Secure Storage Implementation', () => {
   });
 
   describe('Error Handling', () => {
-
     it('✅ Should handle invalid configuration gracefully', async () => {
       const api = createTestApi({
         secureStorage: {

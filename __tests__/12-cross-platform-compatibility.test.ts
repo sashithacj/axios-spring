@@ -238,4 +238,62 @@ describe('12. Cross-Platform Compatibility', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('Persistence Strategy', () => {
+    it('✅ Should work with localStorage in React environment', async () => {
+      // Mock browser environment with localStorage
+      const mockLocalStorage = {
+        getItem: jest.fn().mockReturnValue(null),
+        setItem: jest.fn(),
+        removeItem: jest.fn(),
+      };
+      (global as any).window = { localStorage: mockLocalStorage };
+
+      const api = createTestApi();
+      const accessToken = generateToken(600);
+      const refreshToken = generateToken(1200);
+
+      // Should work with localStorage-based storage
+      await api.setAuthTokens(accessToken, refreshToken);
+      const result = await api.isAuthenticated();
+
+      expect(result).not.toBeNull();
+    });
+
+    it('✅ Should work with AsyncStorage in React Native environment', async () => {
+      // Mock React Native environment
+      const mockAsyncStorage = {
+        getItem: jest.fn().mockResolvedValue(null),
+        setItem: jest.fn().mockResolvedValue(undefined),
+        removeItem: jest.fn().mockResolvedValue(undefined),
+      };
+      (global as any).window = undefined;
+      (global as any).require = jest.fn().mockReturnValue(mockAsyncStorage);
+
+      const api = createTestApi();
+      const accessToken = generateToken(600);
+      const refreshToken = generateToken(1200);
+
+      // Should work with AsyncStorage-based storage
+      await api.setAuthTokens(accessToken, refreshToken);
+      const result = await api.isAuthenticated();
+
+      expect(result).not.toBeNull();
+    });
+
+    it('✅ Should handle storage operations consistently across platforms', async () => {
+      const api = createTestApi();
+      const accessToken = generateToken(600);
+      const refreshToken = generateToken(1200);
+
+      // Should work consistently regardless of platform
+      await api.setAuthTokens(accessToken, refreshToken);
+      const result = await api.isAuthenticated();
+      expect(result).not.toBeNull();
+
+      await api.deleteAuthTokens();
+      const resultAfterDelete = await api.isAuthenticated();
+      expect(resultAfterDelete).toBeNull();
+    });
+  });
 });

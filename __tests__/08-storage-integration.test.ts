@@ -53,8 +53,16 @@ describe('8. Storage Integration', () => {
 
     await api.setAuthTokens(accessToken, refreshToken);
 
-    expect(Storage.setItem).toHaveBeenCalledWith('@axios-spring-access-token', accessToken, expect.any(Number));
-    expect(Storage.setItem).toHaveBeenCalledWith('@axios-spring-refresh-token', refreshToken, expect.any(Number));
+    expect(Storage.setItem).toHaveBeenCalledWith(
+      '@axios-spring-access-token',
+      accessToken,
+      expect.any(Number),
+    );
+    expect(Storage.setItem).toHaveBeenCalledWith(
+      '@axios-spring-refresh-token',
+      refreshToken,
+      expect.any(Number),
+    );
 
     await api.deleteAuthTokens();
 

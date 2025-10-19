@@ -58,14 +58,16 @@ function generateRandomKey(): string {
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     const array = new Uint8Array(32); // 256 bits
     crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
-  
+
   // Fallback for environments without crypto.getRandomValues
-  return Math.random().toString(36).substring(2) + 
-         Math.random().toString(36).substring(2) + 
-         Math.random().toString(36).substring(2) + 
-         Math.random().toString(36).substring(2);
+  return (
+    Math.random().toString(36).substring(2) +
+    Math.random().toString(36).substring(2) +
+    Math.random().toString(36).substring(2) +
+    Math.random().toString(36).substring(2)
+  );
 }
 
 function generateRandomSalt(): string {
@@ -73,13 +75,15 @@ function generateRandomSalt(): string {
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     const array = new Uint8Array(16); // 128 bits
     crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
   }
-  
+
   // Fallback for environments without crypto.getRandomValues
-  return Math.random().toString(36).substring(2) + 
-         Math.random().toString(36).substring(2) + 
-         Math.random().toString(36).substring(2);
+  return (
+    Math.random().toString(36).substring(2) +
+    Math.random().toString(36).substring(2) +
+    Math.random().toString(36).substring(2)
+  );
 }
 
 function extractJwtExpiration(token: string): number | undefined {
@@ -201,7 +205,7 @@ export function initializeApiInstance({
     keyDerivationSalt: secureStorage?.keyDerivationSalt || generateRandomSalt(),
     ...secureStorage, // Override with user-provided config
   };
-  
+
   initializeSecureStorage(defaultSecureStorage);
 
   const attachAccessTokenToRequest =
@@ -239,11 +243,11 @@ export function initializeApiInstance({
   API.setAuthTokens = async (accessToken: string, refreshToken: string) => {
     const accessKey = (API as any)[ACCESS_KEY];
     const refreshKey = (API as any)[REFRESH_KEY];
-    
+
     // Extract JWT expiration times
     const accessTokenExp = extractJwtExpiration(accessToken);
     const refreshTokenExp = extractJwtExpiration(refreshToken);
-    
+
     // Store tokens with their respective expiration times
     await Storage.setItem(accessKey, accessToken, accessTokenExp);
     await Storage.setItem(refreshKey, refreshToken, refreshTokenExp);

@@ -34,7 +34,8 @@ The package is designed to work seamlessly in both web and React Native environm
 - **Always-On AES-GCM Encryption**: Industry-standard encryption for all token storage
 - **HMAC Integrity Verification**: Detects tampering attempts automatically
 - **PBKDF2 Key Derivation**: Secure key generation with 100,000 iterations
-- **Memory-First Storage**: Tokens stored in memory with encrypted persistent backup
+- **Platform-Optimized Storage**: React uses localStorage, React Native uses AsyncStorage
+- **Memory + Persistent Storage**: Dual-layer storage for security and persistence
 - **Automatic Cleanup**: Expired tokens are automatically removed
 - **Cross-Platform Support**: Works securely on both React and React Native
 - **Zero Configuration**: Secure storage is configured automatically with secure defaults
@@ -100,35 +101,36 @@ export default API;
 
 1. **Automatic Encryption**: All tokens are encrypted by default - no configuration needed
 2. **JWT-Based Expiration**: Tokens respect their actual expiration times, not arbitrary storage limits
-3. **Use Strong Encryption Keys**: Generate cryptographically secure keys for custom configurations
-4. **Unique Salt Values**: Use unique salt values for each application
-5. **Regular Key Rotation**: Consider rotating encryption keys periodically
-6. **Monitor for Tampering**: The library automatically detects tampering attempts
-7. **Secure Key Storage**: Store encryption keys securely (environment variables, secure vaults)
-8. **Web Crypto API Required**: Ensure your environment supports Web Crypto API for encryption
+3. **Platform-Optimized Persistence**: React uses localStorage, React Native uses AsyncStorage
+4. **Use Strong Encryption Keys**: Generate cryptographically secure keys for custom configurations
+5. **Unique Salt Values**: Use unique salt values for each application
+6. **Regular Key Rotation**: Consider rotating encryption keys periodically
+7. **Monitor for Tampering**: The library automatically detects tampering attempts
+8. **Secure Key Storage**: Store encryption keys securely (environment variables, secure vaults)
+9. **Web Crypto API Required**: Ensure your environment supports Web Crypto API for encryption
 
 ### Browser Compatibility
 
-| Browser | Version | Web Crypto API | Encryption Support | Status |
-|---------|---------|----------------|-------------------|---------|
-| Chrome | 37+ | ✅ | ✅ | Fully Supported |
-| Firefox | 34+ | ✅ | ✅ | Fully Supported |
-| Safari | 7+ | ✅ | ✅ | Fully Supported |
-| Edge | 12+ | ✅ | ✅ | Fully Supported |
-| Internet Explorer | 11 | ❌ | ❌ | Not Supported |
-| Opera | 24+ | ✅ | ✅ | Fully Supported |
+| Browser           | Version | Web Crypto API | Encryption Support | Status          |
+| ----------------- | ------- | -------------- | ------------------ | --------------- |
+| Chrome            | 37+     | ✅             | ✅                 | Fully Supported |
+| Firefox           | 34+     | ✅             | ✅                 | Fully Supported |
+| Safari            | 7+      | ✅             | ✅                 | Fully Supported |
+| Edge              | 12+     | ✅             | ✅                 | Fully Supported |
+| Internet Explorer | 11      | ❌             | ❌                 | Not Supported   |
+| Opera             | 24+     | ✅             | ✅                 | Fully Supported |
 
 ### React Native Compatibility
 
-| React Native Version | Web Crypto API | Encryption Support | AsyncStorage | Status |
-|---------------------|----------------|-------------------|--------------|---------|
-| 0.60+ | ✅ | ✅ | ✅ | Fully Supported |
-| 0.59 | ✅ | ✅ | ✅ | Fully Supported |
-| 0.58 | ✅ | ✅ | ✅ | Fully Supported |
-| 0.57 | ✅ | ✅ | ✅ | Fully Supported |
-| < 0.57 | ❌ | ❌ | ✅ | Limited Support* |
+| React Native Version | Web Crypto API | Encryption Support | AsyncStorage | Status            |
+| -------------------- | -------------- | ------------------ | ------------ | ----------------- |
+| 0.60+                | ✅             | ✅                 | ✅           | Fully Supported   |
+| 0.59                 | ✅             | ✅                 | ✅           | Fully Supported   |
+| 0.58                 | ✅             | ✅                 | ✅           | Fully Supported   |
+| 0.57                 | ✅             | ✅                 | ✅           | Fully Supported   |
+| < 0.57               | ❌             | ❌                 | ✅           | Limited Support\* |
 
-*Limited Support: Encryption will not work, but basic token storage will function with AsyncStorage.
+\*Limited Support: Encryption will not work, but basic token storage will function with AsyncStorage.
 
 ## Installation
 
@@ -208,7 +210,7 @@ const logout = async () => {
 | `storageAccessTokenKey`       | string                                                                     | No       | @axios-spring-access-token                                     | Storage key using to save the access token. This would be useful if you are managing multiple sessions.                                                        |
 | `storageRefreshTokenKey`      | string                                                                     | No       | @axios-spring-refresh-token                                    | Storage key using to save the refresh token. This would be useful if you are managing multiple sessions.                                                       |
 | `onRefreshFailure`            | (error: unknown) => void                                                   | No       | -                                                              | Callback function called when token refresh fails. Useful for redirecting users to login page or handling authentication errors.                               |
-| `secureStorage`               | SecureStorageConfig                                                        | No       | -                                                              | Configuration for secure token storage with encryption, integrity verification, and automatic cleanup.                                                          |
+| `secureStorage`               | SecureStorageConfig                                                        | No       | -                                                              | Configuration for secure token storage with encryption, integrity verification, and automatic cleanup.                                                         |
 | `attachAccessTokenToRequest`  | (config: AxiosRequestConfig, token: string) => AxiosRequestConfig          | No       | Adds `Authorization: Bearer <token>` header by default         | Custom function to attach the access token to the AxiosSpring requests. Useful if you need to attach it differently (e.g., in custom headers or query params). |
 | `attachRefreshTokenToRequest` | (config: AxiosRequestConfig, token: string) => AxiosRequestConfig          | No       | Sets `{ data: { refreshToken } }`                              | Custom function to attach the refresh token to the token refresh request. Useful if your backend expects the refresh token in a different format or location.  |
 | `extractTokensFromResponse`   | (response: AxiosResponse) => { accessToken: string, refreshToken: string } | No       | Extracts `accessToken` and `refreshToken` from `response.data` | Function to extract tokens from the refresh endpoint response. Customize if your backend returns token data in a different structure.                          |

@@ -25,14 +25,17 @@ class SecureMemoryStorage {
 
   private startCleanup() {
     // Clean up expired entries every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      const now = Date.now();
-      for (const [key, entry] of this.store.entries()) {
-        if (entry.expires > 0 && entry.expires < now) {
-          this.store.delete(key);
+    this.cleanupInterval = setInterval(
+      () => {
+        const now = Date.now();
+        for (const [key, entry] of this.store.entries()) {
+          if (entry.expires > 0 && entry.expires < now) {
+            this.store.delete(key);
+          }
         }
-      }
-    }, 5 * 60 * 1000);
+      },
+      5 * 60 * 1000,
+    );
   }
 
   private getExpiryTime(jwtExp?: number): number {
@@ -95,7 +98,7 @@ class SecureEncryption {
         length: this.KEY_LENGTH,
       },
       true, // extractable
-      ['encrypt', 'decrypt']
+      ['encrypt', 'decrypt'],
     );
   }
 
@@ -105,7 +108,7 @@ class SecureEncryption {
       new TextEncoder().encode(password),
       'PBKDF2',
       false,
-      ['deriveBits', 'deriveKey']
+      ['deriveBits', 'deriveKey'],
     );
 
     return crypto.subtle.deriveKey(
@@ -118,7 +121,7 @@ class SecureEncryption {
       keyMaterial,
       { name: this.ALGORITHM, length: this.KEY_LENGTH },
       false,
-      ['encrypt', 'decrypt']
+      ['encrypt', 'decrypt'],
     );
   }
 
@@ -132,7 +135,7 @@ class SecureEncryption {
         iv: iv,
       },
       key,
-      encodedText
+      encodedText,
     );
 
     // Create HMAC for integrity verification
@@ -141,18 +144,14 @@ class SecureEncryption {
       await crypto.subtle.exportKey('raw', key),
       { name: this.HMAC_ALGORITHM, hash: this.HMAC_HASH },
       false,
-      ['sign']
+      ['sign'],
     );
 
     const dataToSign = new Uint8Array(iv.length + encrypted.byteLength);
     dataToSign.set(iv);
     dataToSign.set(new Uint8Array(encrypted), iv.length);
 
-    const signature = await crypto.subtle.sign(
-      this.HMAC_ALGORITHM,
-      hmacKey,
-      dataToSign
-    );
+    const signature = await crypto.subtle.sign(this.HMAC_ALGORITHM, hmacKey, dataToSign);
 
     // Combine IV, encrypted data, and HMAC signature
     const combined = new Uint8Array(iv.length + encrypted.byteLength + signature.byteLength);
@@ -164,8 +163,8 @@ class SecureEncryption {
   }
 
   static async decrypt(encryptedData: string, key: CryptoKey): Promise<string> {
-    const combined = Uint8Array.from(atob(encryptedData), c => c.charCodeAt(0));
-    
+    const combined = Uint8Array.from(atob(encryptedData), (c) => c.charCodeAt(0));
+
     // Extract components
     const iv = combined.slice(0, this.IV_LENGTH);
     const encrypted = combined.slice(this.IV_LENGTH, combined.length - 32); // 32 bytes for HMAC-SHA256
@@ -177,7 +176,7 @@ class SecureEncryption {
       await crypto.subtle.exportKey('raw', key),
       { name: this.HMAC_ALGORITHM, hash: this.HMAC_HASH },
       false,
-      ['verify']
+      ['verify'],
     );
 
     const dataToVerify = new Uint8Array(iv.length + encrypted.length);
@@ -188,7 +187,7 @@ class SecureEncryption {
       this.HMAC_ALGORITHM,
       hmacKey,
       signature,
-      dataToVerify
+      dataToVerify,
     );
 
     if (!isValid) {
@@ -201,7 +200,7 @@ class SecureEncryption {
         iv: iv,
       },
       key,
-      encrypted
+      encrypted,
     );
 
     return new TextDecoder().decode(decrypted);
@@ -223,10 +222,10 @@ class SecureStorage implements StorageInterface {
     // Check if Web Crypto API is available
     if (typeof crypto !== 'undefined' && crypto.subtle) {
       this.isEncryptionAvailable = true;
-      
+
       if (this.config.encryptionKey) {
         // Use provided key with PBKDF2 derivation
-        const salt = this.config.keyDerivationSalt 
+        const salt = this.config.keyDerivationSalt
           ? new TextEncoder().encode(this.config.keyDerivationSalt)
           : new Uint8Array(16); // Default salt
         this.encryptionKey = await SecureEncryption.deriveKey(this.config.encryptionKey, salt);
@@ -239,25 +238,33 @@ class SecureStorage implements StorageInterface {
 
   private async encryptValue(value: string): Promise<string> {
     if (!this.isEncryptionAvailable || !this.encryptionKey) {
-      throw new Error('Encryption is required but not available. Please ensure Web Crypto API is supported.');
+      throw new Error(
+        'Encryption is required but not available. Please ensure Web Crypto API is supported.',
+      );
     }
 
     try {
       return await SecureEncryption.encrypt(value, this.encryptionKey);
     } catch (error) {
-      throw new Error(`Encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
   private async decryptValue(encryptedValue: string): Promise<string> {
     if (!this.isEncryptionAvailable || !this.encryptionKey) {
-      throw new Error('Decryption is required but not available. Please ensure Web Crypto API is supported.');
+      throw new Error(
+        'Decryption is required but not available. Please ensure Web Crypto API is supported.',
+      );
     }
 
     try {
       return await SecureEncryption.decrypt(encryptedValue, this.encryptionKey);
     } catch (error) {
-      throw new Error(`Decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -300,9 +307,9 @@ class BrowserSecureStorage implements StorageInterface {
   private async initializeEncryption() {
     if (typeof crypto !== 'undefined' && crypto.subtle) {
       this.isEncryptionAvailable = true;
-      
+
       if (this.config.encryptionKey) {
-        const salt = this.config.keyDerivationSalt 
+        const salt = this.config.keyDerivationSalt
           ? new TextEncoder().encode(this.config.keyDerivationSalt)
           : new Uint8Array(16);
         this.encryptionKey = await SecureEncryption.deriveKey(this.config.encryptionKey, salt);
@@ -313,7 +320,11 @@ class BrowserSecureStorage implements StorageInterface {
   }
 
   private async encryptValue(value: string): Promise<string> {
-    if (!this.isEncryptionAvailable || !this.encryptionKey || this.config.enableEncryption === false) {
+    if (
+      !this.isEncryptionAvailable ||
+      !this.encryptionKey ||
+      this.config.enableEncryption === false
+    ) {
       return value;
     }
 
@@ -339,35 +350,34 @@ class BrowserSecureStorage implements StorageInterface {
   }
 
   async getItem(key: string): Promise<string | null> {
-    // Try memory storage first (most secure)
-    const memoryValue = await this.memoryStorage.getItem(key);
-    if (memoryValue) return this.decryptValue(memoryValue);
-
-    // Fallback to localStorage (less secure but persistent)
+    // Try localStorage first (persistent storage for React)
     const localValue = localStorage.getItem(key);
     if (localValue) {
-      // Move to memory storage for better security
-      await this.setItem(key, localValue);
-      localStorage.removeItem(key);
+      // Also store in memory for better security
+      await this.memoryStorage.setItem(key, localValue);
       return this.decryptValue(localValue);
     }
+
+    // Fallback to memory storage
+    const memoryValue = await this.memoryStorage.getItem(key);
+    if (memoryValue) return this.decryptValue(memoryValue);
 
     return null;
   }
 
   async setItem(key: string, value: string, expiresAt?: number): Promise<void> {
     const encryptedValue = await this.encryptValue(value);
-    
-    // Store in memory (most secure)
-    await this.memoryStorage.setItem(key, encryptedValue, expiresAt);
-    
-    // Also store in localStorage as backup (encrypted)
+
+    // Store in localStorage first (persistent storage for React)
     try {
       localStorage.setItem(key, encryptedValue);
     } catch (error) {
       // localStorage might be full or unavailable
       console.warn('localStorage unavailable, using memory storage only:', error);
     }
+
+    // Also store in memory for better security
+    await this.memoryStorage.setItem(key, encryptedValue, expiresAt);
   }
 
   async removeItem(key: string): Promise<void> {
@@ -400,9 +410,9 @@ class ReactNativeSecureStorage implements StorageInterface {
   private async initializeEncryption() {
     if (typeof crypto !== 'undefined' && crypto.subtle) {
       this.isEncryptionAvailable = true;
-      
+
       if (this.config.encryptionKey) {
-        const salt = this.config.keyDerivationSalt 
+        const salt = this.config.keyDerivationSalt
           ? new TextEncoder().encode(this.config.keyDerivationSalt)
           : new Uint8Array(16);
         this.encryptionKey = await SecureEncryption.deriveKey(this.config.encryptionKey, salt);
@@ -413,7 +423,11 @@ class ReactNativeSecureStorage implements StorageInterface {
   }
 
   private async encryptValue(value: string): Promise<string> {
-    if (!this.isEncryptionAvailable || !this.encryptionKey || this.config.enableEncryption === false) {
+    if (
+      !this.isEncryptionAvailable ||
+      !this.encryptionKey ||
+      this.config.enableEncryption === false
+    ) {
       return value;
     }
 
@@ -439,34 +453,33 @@ class ReactNativeSecureStorage implements StorageInterface {
   }
 
   async getItem(key: string): Promise<string | null> {
-    // Try memory storage first (most secure)
-    const memoryValue = await this.memoryStorage.getItem(key);
-    if (memoryValue) return this.decryptValue(memoryValue);
-
-    // Fallback to AsyncStorage (encrypted)
+    // Try AsyncStorage first (persistent storage for React Native)
     const asyncValue = await this.AsyncStorage.getItem(key);
     if (asyncValue) {
-      // Move to memory storage for better security
-      await this.setItem(key, asyncValue);
-      await this.AsyncStorage.removeItem(key);
+      // Also store in memory for better security
+      await this.memoryStorage.setItem(key, asyncValue, undefined);
       return this.decryptValue(asyncValue);
     }
+
+    // Fallback to memory storage
+    const memoryValue = await this.memoryStorage.getItem(key);
+    if (memoryValue) return this.decryptValue(memoryValue);
 
     return null;
   }
 
   async setItem(key: string, value: string, expiresAt?: number): Promise<void> {
     const encryptedValue = await this.encryptValue(value);
-    
-    // Store in memory (most secure)
-    await this.memoryStorage.setItem(key, encryptedValue, expiresAt);
-    
-    // Also store in AsyncStorage as backup (encrypted)
+
+    // Store in AsyncStorage first (persistent storage for React Native)
     try {
       await this.AsyncStorage.setItem(key, encryptedValue);
     } catch (error) {
       console.warn('AsyncStorage unavailable, using memory storage only:', error);
     }
+
+    // Also store in memory for better security
+    await this.memoryStorage.setItem(key, encryptedValue, expiresAt);
   }
 
   async removeItem(key: string): Promise<void> {

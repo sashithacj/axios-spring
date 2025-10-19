@@ -9,11 +9,11 @@ A smart Axios wrapper with automatic JWT refresh flow built for React Native and
 - Configurable token expiry buffer
 - 401 response handling with automatic retry
 - Refresh failure callback for custom error handling
-- **Always-on enterprise-grade AES-GCM encryption**
-- **HMAC integrity verification for tamper detection**
-- **Secure key derivation using PBKDF2**
-- **Automatic memory cleanup and token expiry**
-- **Cross-platform secure storage (React/React Native)**
+- Always-on enterprise-grade AES-GCM encryption
+- HMAC integrity verification for tamper detection
+- Secure key derivation using PBKDF2
+- Automatic memory cleanup and token expiry
+- Cross-platform secure storage (React/React Native)
 - Customizable access token attachment
 - Customizable refresh token attachment
 - Customizable tokens extraction
@@ -27,7 +27,7 @@ The package is designed to work seamlessly in both web and React Native environm
 
 ## Secure Storage Configuration (secureStorage)
 
-`axios-spring` implements **always-on enterprise-grade security** to protect your JWT tokens. All tokens are automatically encrypted using AES-GCM encryption with HMAC integrity verification - **secure storage is configured automatically with secure defaults even if you don't provide any configuration!**
+`axios-spring` implements **always-on enterprise-grade security** to protect your JWT tokens. All tokens are automatically encrypted using AES-GCM encryption with HMAC integrity verification - **secure storage is configured automatically**
 
 ### Security Features
 
@@ -45,11 +45,9 @@ The package is designed to work seamlessly in both web and React Native environm
 ```typescript
 import { initializeApiInstance } from 'axios-spring';
 
-// Secure storage is automatically configured with secure defaults!
 const API = initializeApiInstance({
   baseUrl: 'https://your-api.com/v1/',
   refreshEndpoint: 'auth/refresh',
-  // No secureStorage config needed - defaults are applied automatically
 });
 
 export default API;
@@ -101,12 +99,13 @@ export default API;
 ### Security Best Practices
 
 1. **Automatic Encryption**: All tokens are encrypted by default - no configuration needed
-2. **Use Strong Encryption Keys**: Generate cryptographically secure keys for custom configurations
-3. **Unique Salt Values**: Use unique salt values for each application
-4. **Regular Key Rotation**: Consider rotating encryption keys periodically
-5. **Monitor for Tampering**: The library automatically detects tampering attempts
-6. **Secure Key Storage**: Store encryption keys securely (environment variables, secure vaults)
-7. **Web Crypto API Required**: Ensure your environment supports Web Crypto API for encryption
+2. **JWT-Based Expiration**: Tokens respect their actual expiration times, not arbitrary storage limits
+3. **Use Strong Encryption Keys**: Generate cryptographically secure keys for custom configurations
+4. **Unique Salt Values**: Use unique salt values for each application
+5. **Regular Key Rotation**: Consider rotating encryption keys periodically
+6. **Monitor for Tampering**: The library automatically detects tampering attempts
+7. **Secure Key Storage**: Store encryption keys securely (environment variables, secure vaults)
+8. **Web Crypto API Required**: Ensure your environment supports Web Crypto API for encryption
 
 ### Browser Compatibility
 
@@ -130,17 +129,6 @@ export default API;
 | < 0.57 | ❌ | ❌ | ✅ | Limited Support* |
 
 *Limited Support: Encryption will not work, but basic token storage will function with AsyncStorage.
-
-### Node.js Compatibility
-
-| Node.js Version | Web Crypto API | Encryption Support | Status |
-|----------------|----------------|-------------------|---------|
-| 16+ | ✅ | ✅ | Fully Supported |
-| 15+ | ✅ | ✅ | Fully Supported |
-| 14+ | ✅ | ✅ | Fully Supported |
-| 13+ | ✅ | ✅ | Fully Supported |
-| 12+ | ✅ | ✅ | Fully Supported |
-| < 12 | ❌ | ❌ | Not Supported |
 
 ## Installation
 

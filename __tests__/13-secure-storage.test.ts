@@ -139,6 +139,64 @@ describe('13. Secure Storage Implementation', () => {
     });
   });
 
+  describe('JWT-Based Expiration Handling', () => {
+    it('✅ Should use JWT expiration times for storage instead of fixed maxAge', async () => {
+      const api = createTestApi({
+        secureStorage: {
+          maxAge: 1 * 60 * 1000, // 1 minute - very short
+        },
+      });
+
+      // Create tokens with longer expiration (2 hours)
+      const accessToken = generateToken(7200); // 2 hours
+      const refreshToken = generateToken(86400); // 24 hours
+
+      await api.setAuthTokens(accessToken, refreshToken);
+
+      // Tokens should still be available even though maxAge is 1 minute
+      // because JWT expiration times take precedence
+      const result = await api.isAuthenticated();
+      expect(result).not.toBeNull();
+    });
+
+    it('✅ Should handle tokens without expiration gracefully', async () => {
+      const api = createTestApi({
+        secureStorage: {
+          maxAge: 1 * 60 * 1000, // 1 minute
+        },
+      });
+
+      // Create tokens without expiration (invalid JWT)
+      const accessToken = 'invalid.jwt.token';
+      const refreshToken = 'another.invalid.jwt.token';
+
+      await api.setAuthTokens(accessToken, refreshToken);
+
+      // Should fall back to maxAge when JWT expiration is not available
+      const result = await api.isAuthenticated();
+      expect(result).toBeNull(); // Invalid tokens should return null
+    });
+
+    it('✅ Should respect JWT expiration over maxAge for long-lived tokens', async () => {
+      const api = createTestApi({
+        secureStorage: {
+          maxAge: 5 * 60 * 1000, // 5 minutes
+        },
+      });
+
+      // Create tokens with 30-day expiration
+      const accessToken = generateToken(30 * 24 * 60 * 60); // 30 days
+      const refreshToken = generateToken(30 * 24 * 60 * 60); // 30 days
+
+      await api.setAuthTokens(accessToken, refreshToken);
+
+      // Tokens should be available because JWT expiration (30 days) 
+      // takes precedence over maxAge (5 minutes)
+      const result = await api.isAuthenticated();
+      expect(result).not.toBeNull();
+    });
+  });
+
   describe('Automatic Secure Storage Configuration', () => {
     it('✅ Should automatically configure secure storage with defaults when not provided', async () => {
       const api = createTestApi(); // No secureStorage config

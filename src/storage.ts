@@ -1,6 +1,6 @@
 type StorageInterface = {
   getItem: (key: string) => Promise<string | null>;
-  setItem: (key: string, value: string) => Promise<void>;
+  setItem: (key: string, value: string, expiresAt?: number) => Promise<void>;
   removeItem: (key: string) => Promise<void>;
   clear: () => Promise<void>;
 };
@@ -35,7 +35,12 @@ class SecureMemoryStorage {
     }, 5 * 60 * 1000);
   }
 
-  private getExpiryTime(): number {
+  private getExpiryTime(jwtExp?: number): number {
+    if (jwtExp) {
+      // Use JWT expiration time (convert from seconds to milliseconds)
+      return jwtExp * 1000;
+    }
+    // Fallback to maxAge if no JWT expiration provided
     return this.config.maxAge ? Date.now() + this.config.maxAge : 0;
   }
 
@@ -52,10 +57,10 @@ class SecureMemoryStorage {
     return entry.value;
   }
 
-  async setItem(key: string, value: string): Promise<void> {
+  async setItem(key: string, value: string, expiresAt?: number): Promise<void> {
     this.store.set(key, {
       value,
-      expires: this.getExpiryTime(),
+      expires: this.getExpiryTime(expiresAt),
     });
   }
 
@@ -263,9 +268,9 @@ class SecureStorage implements StorageInterface {
     return this.decryptValue(encryptedValue);
   }
 
-  async setItem(key: string, value: string): Promise<void> {
+  async setItem(key: string, value: string, expiresAt?: number): Promise<void> {
     const encryptedValue = await this.encryptValue(value);
-    return this.memoryStorage.setItem(key, encryptedValue);
+    return this.memoryStorage.setItem(key, encryptedValue, expiresAt);
   }
 
   async removeItem(key: string): Promise<void> {
@@ -350,11 +355,11 @@ class BrowserSecureStorage implements StorageInterface {
     return null;
   }
 
-  async setItem(key: string, value: string): Promise<void> {
+  async setItem(key: string, value: string, expiresAt?: number): Promise<void> {
     const encryptedValue = await this.encryptValue(value);
     
     // Store in memory (most secure)
-    await this.memoryStorage.setItem(key, encryptedValue);
+    await this.memoryStorage.setItem(key, encryptedValue, expiresAt);
     
     // Also store in localStorage as backup (encrypted)
     try {
@@ -450,11 +455,11 @@ class ReactNativeSecureStorage implements StorageInterface {
     return null;
   }
 
-  async setItem(key: string, value: string): Promise<void> {
+  async setItem(key: string, value: string, expiresAt?: number): Promise<void> {
     const encryptedValue = await this.encryptValue(value);
     
     // Store in memory (most secure)
-    await this.memoryStorage.setItem(key, encryptedValue);
+    await this.memoryStorage.setItem(key, encryptedValue, expiresAt);
     
     // Also store in AsyncStorage as backup (encrypted)
     try {

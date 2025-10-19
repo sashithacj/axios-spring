@@ -27,8 +27,8 @@ describe('Group 1: Initialization & Configuration', () => {
     });
 
     await api.setAuthTokens('token1', 'token2');
-    expect(Storage.setItem).toHaveBeenCalledWith(accessKey, 'token1');
-    expect(Storage.setItem).toHaveBeenCalledWith(refreshKey, 'token2');
+    expect(Storage.setItem).toHaveBeenCalledWith(accessKey, 'token1', undefined);
+    expect(Storage.setItem).toHaveBeenCalledWith(refreshKey, 'token2', undefined);
   });
 
   it('✅ uses custom attachAccessTokenToRequest for authenticated requests', async () => {

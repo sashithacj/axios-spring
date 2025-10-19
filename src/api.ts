@@ -82,6 +82,16 @@ function generateRandomSalt(): string {
          Math.random().toString(36).substring(2);
 }
 
+function extractJwtExpiration(token: string): number | undefined {
+  try {
+    const payload = decode(token) as JwtPayload;
+    return payload?.exp;
+  } catch (error) {
+    // If token is invalid, return undefined
+    return undefined;
+  }
+}
+
 async function refreshAuthToken(
   refreshAuthTokenConfig: RefreshConfig,
 ): Promise<{ accessToken: string; refreshToken: string }> {
@@ -229,8 +239,14 @@ export function initializeApiInstance({
   API.setAuthTokens = async (accessToken: string, refreshToken: string) => {
     const accessKey = (API as any)[ACCESS_KEY];
     const refreshKey = (API as any)[REFRESH_KEY];
-    await Storage.setItem(accessKey, accessToken);
-    await Storage.setItem(refreshKey, refreshToken);
+    
+    // Extract JWT expiration times
+    const accessTokenExp = extractJwtExpiration(accessToken);
+    const refreshTokenExp = extractJwtExpiration(refreshToken);
+    
+    // Store tokens with their respective expiration times
+    await Storage.setItem(accessKey, accessToken, accessTokenExp);
+    await Storage.setItem(refreshKey, refreshToken, refreshTokenExp);
   };
 
   API.deleteAuthTokens = async () => {

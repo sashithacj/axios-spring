@@ -7,6 +7,7 @@ type StorageInterface = {
 let Storage: StorageInterface;
 
 (function initializeStorage() {
+  // Check for browser environment (React/Next.js)
   if (typeof window !== 'undefined' && window.localStorage) {
     Storage = {
       getItem: (key) => Promise.resolve(localStorage.getItem(key)),
@@ -22,6 +23,7 @@ let Storage: StorageInterface;
     return;
   }
 
+  // Check for React Native environment
   try {
     const AsyncStorage = require('@react-native-async-storage/async-storage');
     Storage = {
@@ -31,9 +33,10 @@ let Storage: StorageInterface;
     };
     return;
   } catch {
-    console.warn('AsyncStorage not available, falling back to memory storage');
+    // AsyncStorage not available, this is expected in some environments
   }
 
+  // Fallback to memory storage (for testing or unsupported environments)
   const memoryStore: Record<string, string> = {};
   Storage = {
     getItem: (key) => Promise.resolve(memoryStore[key] || null),

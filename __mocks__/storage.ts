@@ -11,12 +11,22 @@ const Storage = {
     delete mockStorage[key];
     return Promise.resolve();
   }),
+  clear: jest.fn(() => {
+    Object.keys(mockStorage).forEach((key) => delete mockStorage[key]);
+    return Promise.resolve();
+  }),
   __reset: () => {
     Object.keys(mockStorage).forEach((key) => delete mockStorage[key]);
     Storage.getItem.mockClear();
     Storage.setItem.mockClear();
     Storage.removeItem.mockClear();
+    Storage.clear.mockClear();
   },
 };
+
+// Mock the initializeSecureStorage function
+export const initializeSecureStorage = jest.fn((config: any) => {
+  return Storage;
+});
 
 export default Storage;

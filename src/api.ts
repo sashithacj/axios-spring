@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import Storage from './storage';
+import Storage, { initializeSecureStorage } from './storage';
 import { decode, JwtPayload } from 'jsonwebtoken';
-import { AxiosSpringInstance, InitializeOptions } from './types';
+import { AxiosSpringInstance, InitializeOptions, SecureStorageConfig } from './types';
 
 type FailedRequest = {
   resolve: (token: string) => void;
@@ -51,6 +51,35 @@ function joinUrl(baseUrl: string, path: string): string {
   if (!baseUrl.endsWith('/')) baseUrl += '/';
   if (path.startsWith('/')) path = path.slice(1);
   return baseUrl + path;
+}
+
+function generateRandomKey(): string {
+  // Generate a cryptographically secure random key
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const array = new Uint8Array(32); // 256 bits
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+  
+  // Fallback for environments without crypto.getRandomValues
+  return Math.random().toString(36).substring(2) + 
+         Math.random().toString(36).substring(2) + 
+         Math.random().toString(36).substring(2) + 
+         Math.random().toString(36).substring(2);
+}
+
+function generateRandomSalt(): string {
+  // Generate a cryptographically secure random salt
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const array = new Uint8Array(16); // 128 bits
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+  
+  // Fallback for environments without crypto.getRandomValues
+  return Math.random().toString(36).substring(2) + 
+         Math.random().toString(36).substring(2) + 
+         Math.random().toString(36).substring(2);
 }
 
 async function refreshAuthToken(
@@ -142,6 +171,7 @@ export function initializeApiInstance({
   reactOn401Responses = true,
   storageAccessTokenKey = '@axios-spring-access-token',
   storageRefreshTokenKey = '@axios-spring-refresh-token',
+  secureStorage,
   onRefreshFailure,
   attachAccessTokenToRequest: customAccessTokenAttachFn,
   attachRefreshTokenToRequest: customRefreshTokenAttachFn,
@@ -150,6 +180,19 @@ export function initializeApiInstance({
 }: InitializeOptions): AxiosSpringInstance {
   const API = axios.create({ ...axiosConfigOptions, baseURL: baseUrl }) as AxiosSpringInstance;
   const refreshEndpointUrl = joinUrl(baseUrl, refreshEndpoint);
+
+  // Always initialize secure storage with defaults or custom configuration
+  const defaultSecureStorage = {
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    autoCleanup: true,
+    // Generate random encryption key if not provided
+    encryptionKey: secureStorage?.encryptionKey || generateRandomKey(),
+    // Generate random salt if not provided
+    keyDerivationSalt: secureStorage?.keyDerivationSalt || generateRandomSalt(),
+    ...secureStorage, // Override with user-provided config
+  };
+  
+  initializeSecureStorage(defaultSecureStorage);
 
   const attachAccessTokenToRequest =
     customAccessTokenAttachFn ??

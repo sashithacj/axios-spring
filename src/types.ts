@@ -3,6 +3,13 @@ import { JwtPayload } from 'jsonwebtoken';
 export { AxiosRequestConfig, AxiosResponse } from 'axios';
 export { JwtPayload } from 'jsonwebtoken';
 
+export interface SecureStorageConfig {
+  encryptionKey?: string;
+  keyDerivationSalt?: string;
+  maxAge?: number; // in milliseconds
+  autoCleanup?: boolean;
+}
+
 export interface InitializeOptions extends Omit<CreateAxiosDefaults, 'baseURL'> {
   baseUrl: string;
   refreshEndpoint: string;
@@ -10,6 +17,7 @@ export interface InitializeOptions extends Omit<CreateAxiosDefaults, 'baseURL'> 
   reactOn401Responses?: boolean;
   storageAccessTokenKey?: string;
   storageRefreshTokenKey?: string;
+  secureStorage?: SecureStorageConfig;
   onRefreshFailure?: (error: unknown) => void;
   attachAccessTokenToRequest?: (
     config: AxiosRequestConfig,

@@ -10,6 +10,7 @@ export interface InitializeOptions extends Omit<CreateAxiosDefaults, 'baseURL'> 
   reactOn401Responses?: boolean;
   storageAccessTokenKey?: string;
   storageRefreshTokenKey?: string;
+  onRefreshFailure?: (error: unknown) => void;
   attachAccessTokenToRequest?: (
     config: AxiosRequestConfig,
     accessToken: string,

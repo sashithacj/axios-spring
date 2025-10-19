@@ -8,6 +8,7 @@ A smart Axios wrapper with automatic JWT refresh flow built for React Native and
 - Request queuing during token refresh
 - Configurable token expiry buffer
 - 401 response handling with automatic retry
+- Refresh failure callback for custom error handling
 - Customizable access token attachment
 - Customizable refresh token attachment
 - Customizable tokens extraction
@@ -39,6 +40,11 @@ const API = initializeApiInstance({
   refreshEndpoint: 'auth/refresh',
   tokenExpiryBufferSeconds: 30, // optional, default is 30
   reactOn401Responses: true, // optional, default is true
+  onRefreshFailure: (error) => {
+    // Handle refresh failure (e.g., redirect to login)
+    console.error('Token refresh failed:', error);
+    window.location.href = '/login';
+  },
 });
 
 export default API;
@@ -91,6 +97,7 @@ const logout = async () => {
 | `reactOn401Responses`         | boolean                                                                    | No       | true                                                           | Whether to automatically react to HTTP 401 responses by attempting to refresh the token and retrying the request.                                              |
 | `storageAccessTokenKey`       | string                                                                     | No       | @axios-spring-access-token                                     | Storage key using to save the access token. This would be useful if you are managing multiple sessions.                                                        |
 | `storageRefreshTokenKey`      | string                                                                     | No       | @axios-spring-refresh-token                                    | Storage key using to save the refresh token. This would be useful if you are managing multiple sessions.                                                       |
+| `onRefreshFailure`            | (error: unknown) => void                                                   | No       | -                                                              | Callback function called when token refresh fails. Useful for redirecting users to login page or handling authentication errors.                               |
 | `attachAccessTokenToRequest`  | (config: AxiosRequestConfig, token: string) => AxiosRequestConfig          | No       | Adds `Authorization: Bearer <token>` header by default         | Custom function to attach the access token to the AxiosSpring requests. Useful if you need to attach it differently (e.g., in custom headers or query params). |
 | `attachRefreshTokenToRequest` | (config: AxiosRequestConfig, token: string) => AxiosRequestConfig          | No       | Sets `{ data: { refreshToken } }`                              | Custom function to attach the refresh token to the token refresh request. Useful if your backend expects the refresh token in a different format or location.  |
 | `extractTokensFromResponse`   | (response: AxiosResponse) => { accessToken: string, refreshToken: string } | No       | Extracts `accessToken` and `refreshToken` from `response.data` | Function to extract tokens from the refresh endpoint response. Customize if your backend returns token data in a different structure.                          |
@@ -180,6 +187,33 @@ const API = initializeApiInstance({
 
 export default API;
 ```
+
+## Refresh Failure Handling (onRefreshFailure)
+
+When token refresh fails (due to expired refresh token, network errors, or server issues), you can provide a callback function to handle the failure gracefully. This is particularly useful for redirecting users to the login page or clearing stored data.
+
+```typescript
+import { initializeApiInstance } from 'axios-spring';
+
+const API = initializeApiInstance({
+  baseUrl: 'https://your-api.com/v1/',
+  refreshEndpoint: 'auth/refresh',
+  onRefreshFailure: (error) => {
+    // Clear any stored user data
+    localStorage.removeItem('userData');
+    
+    // Redirect to login page
+    window.location.href = '/login';
+    
+    // Or show a notification
+    console.error('Session expired. Please log in again.');
+  },
+});
+
+export default API;
+```
+
+The callback receives the error object that caused the refresh to fail, allowing you to implement custom error handling based on the specific failure reason.
 
 ## Notes
 

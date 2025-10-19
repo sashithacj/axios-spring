@@ -12,10 +12,11 @@ export const generateToken = (expiresInSeconds: number): string => {
   return jwt.sign({ exp: Math.floor(Date.now() / 1000) + expiresInSeconds }, 'secret');
 };
 
-export const createTestApi = () => {
+export const createTestApi = (options: any = {}) => {
   return initializeApiInstance({
     baseUrl: 'https://api.test.com',
     refreshEndpoint: '/auth/refresh',
+    ...options,
   });
 };
 

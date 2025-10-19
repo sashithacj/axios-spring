@@ -13,6 +13,7 @@ type RefreshConfig = {
   refreshKey: string;
   refreshEndpointUrl: string;
   tokenExpiryBufferSeconds: number;
+  onRefreshFailure?: (error: unknown) => void;
   attachRefreshTokenToRequest: (
     config: AxiosRequestConfig,
     refreshToken: string,
@@ -90,7 +91,7 @@ async function ensureFreshAccessToken(
   API: AxiosSpringInstance,
   refreshAuthTokenConfig: RefreshConfig,
 ): Promise<string | null> {
-  const { accessKey, tokenExpiryBufferSeconds } = refreshAuthTokenConfig;
+  const { accessKey, tokenExpiryBufferSeconds, onRefreshFailure } = refreshAuthTokenConfig;
   let accessToken = await Storage.getItem(accessKey);
   if (!accessToken) return null;
 
@@ -115,6 +116,9 @@ async function ensureFreshAccessToken(
     } catch (err) {
       state.failedRequestsQueue.forEach(({ reject }) => reject(err));
       state.failedRequestsQueue = [];
+      if (onRefreshFailure) {
+        onRefreshFailure(err);
+      }
       return null;
     } finally {
       state.isRefreshing = false;
@@ -138,6 +142,7 @@ export function initializeApiInstance({
   reactOn401Responses = true,
   storageAccessTokenKey = '@axios-spring-access-token',
   storageRefreshTokenKey = '@axios-spring-refresh-token',
+  onRefreshFailure,
   attachAccessTokenToRequest: customAccessTokenAttachFn,
   attachRefreshTokenToRequest: customRefreshTokenAttachFn,
   extractTokensFromResponse: customTokensExtractFn,
@@ -200,6 +205,7 @@ export function initializeApiInstance({
       refreshKey,
       refreshEndpointUrl,
       tokenExpiryBufferSeconds,
+      onRefreshFailure,
       attachRefreshTokenToRequest,
       extractTokensFromResponse,
     });
@@ -215,6 +221,7 @@ export function initializeApiInstance({
         refreshKey: storageRefreshTokenKey,
         refreshEndpointUrl,
         tokenExpiryBufferSeconds,
+        onRefreshFailure,
         attachRefreshTokenToRequest,
         extractTokensFromResponse,
       });
@@ -240,6 +247,7 @@ export function initializeApiInstance({
             refreshKey: storageRefreshTokenKey,
             refreshEndpointUrl,
             tokenExpiryBufferSeconds: 0,
+            onRefreshFailure,
             attachRefreshTokenToRequest,
             extractTokensFromResponse,
           });

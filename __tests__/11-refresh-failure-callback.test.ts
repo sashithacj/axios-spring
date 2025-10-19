@@ -35,7 +35,7 @@ describe('11. Refresh Failure Callback', () => {
         response: expect.objectContaining({
           status: 500,
         }),
-      })
+      }),
     );
   });
 
@@ -52,7 +52,7 @@ describe('11. Refresh Failure Callback', () => {
     expect(onRefreshFailureMock).toHaveBeenCalledWith(
       expect.objectContaining({
         message: 'No refresh token available',
-      })
+      }),
     );
   });
 
@@ -74,7 +74,7 @@ describe('11. Refresh Failure Callback', () => {
     expect(onRefreshFailureMock).toHaveBeenCalledWith(
       expect.objectContaining({
         message: 'Invalid refreshEndpoint response',
-      })
+      }),
     );
   });
 
@@ -94,7 +94,7 @@ describe('11. Refresh Failure Callback', () => {
 
     // All requests should return null
     expect(results.every((r) => r === null)).toBe(true);
-    
+
     // Callback should be called only once (not for each queued request)
     expect(onRefreshFailureMock).toHaveBeenCalledTimes(1);
   });
@@ -154,7 +154,7 @@ describe('11. Refresh Failure Callback', () => {
             error: 'Refresh token expired',
           }),
         }),
-      })
+      }),
     );
   });
 });

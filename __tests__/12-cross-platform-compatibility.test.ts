@@ -16,7 +16,7 @@ describe('12. Cross-Platform Compatibility', () => {
       // Mock browser environment
       const originalWindow = global.window;
       const originalLocalStorage = global.localStorage;
-      
+
       global.window = {
         localStorage: {
           getItem: jest.fn(),
@@ -44,7 +44,7 @@ describe('12. Cross-Platform Compatibility', () => {
       // Mock React Native environment
       const originalWindow = global.window;
       const originalRequire = require;
-      
+
       // Remove window and localStorage
       delete (global as any).window;
       delete (global as any).localStorage;
@@ -75,7 +75,7 @@ describe('12. Cross-Platform Compatibility', () => {
       // Mock environment with no storage
       const originalWindow = global.window;
       const originalRequire = require;
-      
+
       delete (global as any).window;
       delete (global as any).localStorage;
 
@@ -94,16 +94,20 @@ describe('12. Cross-Platform Compatibility', () => {
       expect(typeof StorageModule.removeItem).toBe('function');
 
       // Test memory storage functionality
-      return StorageModule.setItem('test', 'value').then(() => {
-        return StorageModule.getItem('test');
-      }).then((value: string | null) => {
-        expect(value).toBe('value');
-        return StorageModule.removeItem('test');
-      }).then(() => {
-        return StorageModule.getItem('test');
-      }).then((value: string | null) => {
-        expect(value).toBeNull();
-      });
+      return StorageModule.setItem('test', 'value')
+        .then(() => {
+          return StorageModule.getItem('test');
+        })
+        .then((value: string | null) => {
+          expect(value).toBe('value');
+          return StorageModule.removeItem('test');
+        })
+        .then(() => {
+          return StorageModule.getItem('test');
+        })
+        .then((value: string | null) => {
+          expect(value).toBeNull();
+        });
 
       // Restore globals
       global.window = originalWindow;
@@ -197,7 +201,7 @@ describe('12. Cross-Platform Compatibility', () => {
 
       // Mock 401 response
       mockAxios.onGet('https://api.test.com/protected').reply(401);
-      
+
       // Mock successful refresh
       mockAxios.onPost('https://api.test.com/auth/refresh').reply(200, {
         accessToken: newAccessToken,

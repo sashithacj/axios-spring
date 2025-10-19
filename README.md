@@ -202,11 +202,11 @@ const API = initializeApiInstance({
     // Clear any stored user data
     // In React: localStorage.removeItem('userData');
     // In React Native: AsyncStorage.removeItem('userData');
-    
+
     // Redirect to login page
     // In React: window.location.href = '/login';
     // In React Native: NavigationService.navigate('Login');
-    
+
     // Or show a notification
     console.error('Session expired. Please log in again.');
   },
@@ -216,8 +216,6 @@ export default API;
 ```
 
 The callback receives the error object that caused the refresh to fail, allowing you to implement custom error handling based on the specific failure reason.
-
-> **Note**: See the `examples/` directory for complete React and React Native implementation examples.
 
 ### React Example
 
@@ -231,10 +229,10 @@ const API = initializeApiInstance({
     // Clear stored data
     localStorage.removeItem('userData');
     localStorage.removeItem('preferences');
-    
+
     // Redirect to login
     window.location.href = '/login';
-    
+
     // Show notification
     alert('Session expired. Please log in again.');
   },
@@ -256,10 +254,10 @@ const API = initializeApiInstance({
   onRefreshFailure: async (error) => {
     // Clear stored data
     await AsyncStorage.multiRemove(['userData', 'preferences']);
-    
+
     // Navigate to login screen
     NavigationService.navigate('Login');
-    
+
     // Show notification
     Alert.alert('Session Expired', 'Please log in again.');
   },

@@ -1,6 +1,6 @@
 # axios-spring
 
-A smart Axios wrapper with automatic JWT refresh flow built for React Native and React (Next.js-friendly) 🌱
+A smart Axios wrapper with automatic JWT refresh flow built for React Native and React (Next.js-friendly) with universal compatibility and comprehensive automatic polyfill support 🌱
 
 ## Features
 
@@ -14,6 +14,7 @@ A smart Axios wrapper with automatic JWT refresh flow built for React Native and
 - Secure key derivation using PBKDF2
 - Automatic memory cleanup and token expiry
 - Cross-platform secure storage (React/React Native)
+- Comprehensive automatic polyfill support (Web Crypto API, TextEncoder/TextDecoder, Buffer)
 - Customizable access token attachment
 - Customizable refresh token attachment
 - Customizable tokens extraction
@@ -111,14 +112,16 @@ export default API;
 
 ### Browser Compatibility
 
-| Browser           | Version | Web Crypto API | Encryption Support | Status          |
-| ----------------- | ------- | -------------- | ------------------ | --------------- |
-| Chrome            | 37+     | ✅             | ✅                 | Fully Supported |
-| Firefox           | 34+     | ✅             | ✅                 | Fully Supported |
-| Safari            | 7+      | ✅             | ✅                 | Fully Supported |
-| Edge              | 12+     | ✅             | ✅                 | Fully Supported |
-| Internet Explorer | 11      | ❌             | ❌                 | Not Supported   |
-| Opera             | 24+     | ✅             | ✅                 | Fully Supported |
+| Browser           | Web Crypto API | Encryption Support | Status          |
+| ----------------- | -------------- | ------------------ | --------------- |
+| Chrome            | ✅             | ✅                 | Fully Supported |
+| Firefox           | ✅             | ✅                 | Fully Supported |
+| Safari            | ✅             | ✅                 | Fully Supported |
+| Edge              | ✅             | ✅                 | Fully Supported |
+| Internet Explorer | ✅ (Polyfill)  | ✅                 | Fully Supported |
+| Opera             | ✅             | ✅                 | Fully Supported |
+
+*All browsers: Uses automatic polyfill for Web Crypto API support when needed*
 
 ### Server-Side Rendering (SSR) Support
 
@@ -135,22 +138,31 @@ export default API;
 
 - **SSR Environments**: Automatically polyfilled for Next.js, Node.js, and other server environments
 - **Legacy Browsers**: Automatic fallback for older browsers without Web Crypto API
-- **React Native**: Works out of the box with automatic polyfill detection
+- **React Native**: Works out of the box with automatic polyfill detection for all versions
 - **Zero Configuration**: No bundler configuration or manual polyfill setup needed
+- **Universal Support**: All platforms now support full encryption functionality
 
 The package includes `@peculiar/webcrypto` as a dependency and automatically sets up polyfills when imported, ensuring secure encryption works everywhere.
 
+### Polyfill Details
+
+The automatic polyfill system provides comprehensive support for all required APIs:
+- **Web Crypto API**: Uses `@peculiar/webcrypto` for cryptographic operations
+- **TextEncoder/TextDecoder**: Uses `fast-text-encoding` for string encoding/decoding
+- **Buffer**: Uses `buffer` polyfill for Node.js Buffer compatibility
+- **Detects Environment**: Automatically detects which APIs are missing
+- **Loads Polyfills**: Dynamically loads polyfills only when needed
+- **Zero Bundle Impact**: Polyfills are only loaded in environments that need them
+- **Fallback Graceful**: Gracefully handles polyfill loading failures
+- **Universal Coverage**: Ensures all features work on all supported platforms
+
 ### React Native Compatibility
 
-| React Native Version | Web Crypto API | Encryption Support | AsyncStorage | Status            |
-| -------------------- | -------------- | ------------------ | ------------ | ----------------- |
-| 0.60+                | ✅             | ✅                 | ✅           | Fully Supported   |
-| 0.59                 | ✅             | ✅                 | ✅           | Fully Supported   |
-| 0.58                 | ✅             | ✅                 | ✅           | Fully Supported   |
-| 0.57                 | ✅             | ✅                 | ✅           | Fully Supported   |
-| < 0.57               | ❌             | ❌                 | ✅           | Limited Support\* |
+| React Native | Web Crypto API | Encryption Support | AsyncStorage | Status          |
+| ------------ | -------------- | ------------------ | ------------ | --------------- |
+| All Versions | ✅             | ✅                 | ✅           | Fully Supported |
 
-\*Limited Support: Encryption will not work, but basic token storage will function with AsyncStorage.
+*All React Native versions: Uses automatic polyfill for Web Crypto API support when needed*
 
 ## Installation
 

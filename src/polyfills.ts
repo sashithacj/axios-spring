@@ -1,13 +1,82 @@
 /**
- * Automatic polyfill setup for Web Crypto API
- * This module automatically configures polyfills for environments that don't support Web Crypto API
+ * Automatic polyfill setup for Web Crypto API and other required APIs
+ * This module automatically configures polyfills for environments that don't support modern APIs
  */
 
 /**
- * Setup Web Crypto API polyfill for environments that don't support it
- * This function is automatically called when the module is imported
+ * Setup TextEncoder/TextDecoder polyfill for environments that don't support it
  */
-export function setupWebCryptoPolyfill(): void {
+function setupTextEncodingPolyfill(): void {
+  // Check if TextEncoder/TextDecoder are available
+  if (typeof globalThis !== 'undefined' && (!globalThis.TextEncoder || !globalThis.TextDecoder)) {
+    try {
+      // Import the polyfill dynamically
+      const { TextEncoder, TextDecoder } = require('fast-text-encoding');
+
+      // Set up the polyfills
+      if (!globalThis.TextEncoder) {
+        globalThis.TextEncoder = TextEncoder;
+      }
+      if (!globalThis.TextDecoder) {
+        globalThis.TextDecoder = TextDecoder;
+      }
+
+      // Also set up on global for Node.js environments
+      if (typeof global !== 'undefined') {
+        if (!global.TextEncoder) {
+          (global as any).TextEncoder = TextEncoder;
+        }
+        if (!global.TextDecoder) {
+          (global as any).TextDecoder = TextDecoder;
+        }
+      }
+
+      console.log('🔤 axios-spring: TextEncoder/TextDecoder polyfill loaded successfully');
+    } catch (error) {
+      console.warn(
+        '⚠️ axios-spring: Failed to load TextEncoder/TextDecoder polyfill. ' +
+          'Some features may not work in this environment. ' +
+          'Error:',
+        error,
+      );
+    }
+  }
+}
+
+/**
+ * Setup Buffer polyfill for environments that don't support it
+ */
+function setupBufferPolyfill(): void {
+  // Check if Buffer is available
+  if (typeof globalThis !== 'undefined' && !globalThis.Buffer) {
+    try {
+      // Import the polyfill dynamically
+      const { Buffer } = require('buffer');
+
+      // Set up the polyfill
+      globalThis.Buffer = Buffer;
+
+      // Also set up on global for Node.js environments
+      if (typeof global !== 'undefined') {
+        (global as any).Buffer = Buffer;
+      }
+
+      console.log('📦 axios-spring: Buffer polyfill loaded successfully');
+    } catch (error) {
+      console.warn(
+        '⚠️ axios-spring: Failed to load Buffer polyfill. ' +
+          'Some features may not work in this environment. ' +
+          'Error:',
+        error,
+      );
+    }
+  }
+}
+
+/**
+ * Setup Web Crypto API polyfill for environments that don't support it
+ */
+function setupWebCryptoPolyfill(): void {
   // Only setup polyfill if Web Crypto API is not available
   if (typeof globalThis !== 'undefined' && !globalThis.crypto) {
     try {
@@ -33,6 +102,18 @@ export function setupWebCryptoPolyfill(): void {
     }
   }
 }
+
+/**
+ * Setup all required polyfills
+ */
+export function setupAllPolyfills(): void {
+  setupTextEncodingPolyfill();
+  setupBufferPolyfill();
+  setupWebCryptoPolyfill();
+}
+
+// Legacy export for backward compatibility
+export { setupAllPolyfills as setupWebCryptoPolyfill };
 
 // Automatically setup polyfill when this module is imported
 setupWebCryptoPolyfill();

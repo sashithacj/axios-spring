@@ -1,3 +1,14 @@
+import {
+  isWebCryptoAvailable,
+  base64Encode,
+  base64Decode,
+  uint8ArrayToBase64,
+  base64ToUint8Array,
+  getRandomValues,
+  generateRandomKey,
+  generateRandomSalt,
+} from './utils';
+
 type StorageInterface = {
   getItem: (key: string) => Promise<string | null>;
   setItem: (key: string, value: string, expiresAt?: number) => Promise<void>;
@@ -92,6 +103,12 @@ class SecureEncryption {
   private static readonly HMAC_HASH = 'SHA-256';
 
   static async generateKey(): Promise<CryptoKey> {
+    if (!isWebCryptoAvailable()) {
+      throw new Error(
+        'Web Crypto API is not available. Please ensure your environment supports Web Crypto API or provide polyfills.',
+      );
+    }
+
     return crypto.subtle.generateKey(
       {
         name: this.ALGORITHM,
@@ -103,6 +120,12 @@ class SecureEncryption {
   }
 
   static async deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+    if (!isWebCryptoAvailable()) {
+      throw new Error(
+        'Web Crypto API is not available. Please ensure your environment supports Web Crypto API or provide polyfills.',
+      );
+    }
+
     const keyMaterial = await crypto.subtle.importKey(
       'raw',
       new TextEncoder().encode(password),
@@ -126,7 +149,14 @@ class SecureEncryption {
   }
 
   static async encrypt(plaintext: string, key: CryptoKey): Promise<string> {
-    const iv = crypto.getRandomValues(new Uint8Array(this.IV_LENGTH));
+    if (!isWebCryptoAvailable()) {
+      throw new Error(
+        'Web Crypto API is not available. Please ensure your environment supports Web Crypto API or provide polyfills.',
+      );
+    }
+
+    const iv = new Uint8Array(this.IV_LENGTH);
+    getRandomValues(iv);
     const encodedText = new TextEncoder().encode(plaintext);
 
     const encrypted = await crypto.subtle.encrypt(
@@ -159,11 +189,17 @@ class SecureEncryption {
     combined.set(new Uint8Array(encrypted), iv.length);
     combined.set(new Uint8Array(signature), iv.length + encrypted.byteLength);
 
-    return btoa(String.fromCharCode(...combined));
+    return uint8ArrayToBase64(combined);
   }
 
   static async decrypt(encryptedData: string, key: CryptoKey): Promise<string> {
-    const combined = Uint8Array.from(atob(encryptedData), (c) => c.charCodeAt(0));
+    if (!isWebCryptoAvailable()) {
+      throw new Error(
+        'Web Crypto API is not available. Please ensure your environment supports Web Crypto API or provide polyfills.',
+      );
+    }
+
+    const combined = base64ToUint8Array(encryptedData);
 
     // Extract components
     const iv = combined.slice(0, this.IV_LENGTH);
@@ -220,7 +256,7 @@ class SecureStorage implements StorageInterface {
 
   private async initializeEncryption() {
     // Check if Web Crypto API is available
-    if (typeof crypto !== 'undefined' && crypto.subtle) {
+    if (isWebCryptoAvailable()) {
       this.isEncryptionAvailable = true;
 
       if (this.config.encryptionKey) {
@@ -233,6 +269,10 @@ class SecureStorage implements StorageInterface {
         // Generate a new key (stored in memory only)
         this.encryptionKey = await SecureEncryption.generateKey();
       }
+    } else {
+      console.warn(
+        'Web Crypto API is not available. Encryption will be disabled. Please ensure your environment supports Web Crypto API or provide polyfills.',
+      );
     }
   }
 
@@ -305,7 +345,7 @@ class BrowserSecureStorage implements StorageInterface {
   }
 
   private async initializeEncryption() {
-    if (typeof crypto !== 'undefined' && crypto.subtle) {
+    if (isWebCryptoAvailable()) {
       this.isEncryptionAvailable = true;
 
       if (this.config.encryptionKey) {
@@ -316,6 +356,10 @@ class BrowserSecureStorage implements StorageInterface {
       } else {
         this.encryptionKey = await SecureEncryption.generateKey();
       }
+    } else {
+      console.warn(
+        'Web Crypto API is not available. Encryption will be disabled. Please ensure your environment supports Web Crypto API or provide polyfills.',
+      );
     }
   }
 
@@ -408,7 +452,7 @@ class ReactNativeSecureStorage implements StorageInterface {
   }
 
   private async initializeEncryption() {
-    if (typeof crypto !== 'undefined' && crypto.subtle) {
+    if (isWebCryptoAvailable()) {
       this.isEncryptionAvailable = true;
 
       if (this.config.encryptionKey) {
@@ -419,6 +463,10 @@ class ReactNativeSecureStorage implements StorageInterface {
       } else {
         this.encryptionKey = await SecureEncryption.generateKey();
       }
+    } else {
+      console.warn(
+        'Web Crypto API is not available. Encryption will be disabled. Please ensure your environment supports Web Crypto API or provide polyfills.',
+      );
     }
   }
 

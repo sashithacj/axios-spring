@@ -1,6 +1,6 @@
 {
   "name": "axios-spring",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A smart Axios wrapper with automatic JWT refresh flow built for React Native and React (Next.js-friendly) 🌱",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -37,7 +37,8 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^1.12.2",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "@peculiar/webcrypto": "^1.5.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

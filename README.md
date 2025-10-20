@@ -107,7 +107,7 @@ export default API;
 6. **Regular Key Rotation**: Consider rotating encryption keys periodically
 7. **Monitor for Tampering**: The library automatically detects tampering attempts
 8. **Secure Key Storage**: Store encryption keys securely (environment variables, secure vaults)
-9. **Web Crypto API Required**: Ensure your environment supports Web Crypto API for encryption
+9. **Automatic Polyfills**: The package automatically includes Web Crypto API polyfills for environments that don't support it natively
 
 ### Browser Compatibility
 
@@ -119,6 +119,26 @@ export default API;
 | Edge              | 12+     | ✅             | ✅                 | Fully Supported |
 | Internet Explorer | 11      | ❌             | ❌                 | Not Supported   |
 | Opera             | 24+     | ✅             | ✅                 | Fully Supported |
+
+### Server-Side Rendering (SSR) Support
+
+`axios-spring` is designed to work seamlessly in both client and server environments:
+
+- **Next.js App Router**: Fully supported with automatic environment detection
+- **Next.js Pages Router**: Supported with proper polyfills
+- **Node.js**: Supported with built-in Buffer polyfills
+- **Vite/Webpack**: Automatic polyfill detection and fallbacks
+
+#### Automatic Polyfill Support
+
+`axios-spring` automatically includes and configures Web Crypto API polyfills for environments that don't support it natively. **No additional setup required!**
+
+- **SSR Environments**: Automatically polyfilled for Next.js, Node.js, and other server environments
+- **Legacy Browsers**: Automatic fallback for older browsers without Web Crypto API
+- **React Native**: Works out of the box with automatic polyfill detection
+- **Zero Configuration**: No bundler configuration or manual polyfill setup needed
+
+The package includes `@peculiar/webcrypto` as a dependency and automatically sets up polyfills when imported, ensuring secure encryption works everywhere.
 
 ### React Native Compatibility
 
@@ -386,6 +406,7 @@ export default API;
 3. The token refresh queue ensures no duplicate refresh requests are made
 4. You must manage token storage in your application code
 5. Compatible with both browser and React Native environments
+6. Automatic runtime detection ensures cross-platform compatibility
 
 ## Acknowledgements
 

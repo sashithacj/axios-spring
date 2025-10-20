@@ -2,6 +2,7 @@ import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import Storage, { initializeSecureStorage } from './storage';
 import { decode, JwtPayload } from 'jsonwebtoken';
 import { AxiosSpringInstance, InitializeOptions, SecureStorageConfig } from './types';
+import { generateRandomKey, generateRandomSalt } from './utils';
 
 type FailedRequest = {
   resolve: (token: string) => void;
@@ -51,39 +52,6 @@ function joinUrl(baseUrl: string, path: string): string {
   if (!baseUrl.endsWith('/')) baseUrl += '/';
   if (path.startsWith('/')) path = path.slice(1);
   return baseUrl + path;
-}
-
-function generateRandomKey(): string {
-  // Generate a cryptographically secure random key
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    const array = new Uint8Array(32); // 256 bits
-    crypto.getRandomValues(array);
-    return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
-  }
-
-  // Fallback for environments without crypto.getRandomValues
-  return (
-    Math.random().toString(36).substring(2) +
-    Math.random().toString(36).substring(2) +
-    Math.random().toString(36).substring(2) +
-    Math.random().toString(36).substring(2)
-  );
-}
-
-function generateRandomSalt(): string {
-  // Generate a cryptographically secure random salt
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    const array = new Uint8Array(16); // 128 bits
-    crypto.getRandomValues(array);
-    return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
-  }
-
-  // Fallback for environments without crypto.getRandomValues
-  return (
-    Math.random().toString(36).substring(2) +
-    Math.random().toString(36).substring(2) +
-    Math.random().toString(36).substring(2)
-  );
 }
 
 function extractJwtExpiration(token: string): number | undefined {

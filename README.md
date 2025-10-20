@@ -24,7 +24,7 @@ A smart Axios wrapper with automatic JWT refresh flow built for React Native and
 
 This package wraps an Axios instance with automatic JWT authentication and token refreshing logic. When you make a request, it checks if the access token is valid (with a configurable buffer window). If the token is expired, it will automatically attempt to refresh it using the provided refresh token and endpoint. You can also plug in custom logic to attach tokens to requests, extract new tokens from responses, and define exactly how requests should behave during refresh cycles. All tokens are securely stored and reused across requests without you needing to manage them manually.
 
-The package is designed to work seamlessly in both web and React Native environments. It detects the runtime and automatically selects the appropriate storage backend: for web apps, it uses localStorage; for React Native, it uses @react-native-async-storage/async-storage. This makes the package ideal for cross-platform projects, giving you the same developer experience with secure token handling and refresh logic regardless of the platform.
+The package is designed to work seamlessly across all environments with comprehensive automatic polyfill support. It detects the runtime and automatically selects the appropriate storage backend: for web apps, it uses localStorage; for React Native, it uses @react-native-async-storage/async-storage. The package automatically loads necessary polyfills for Web Crypto API, TextEncoder/TextDecoder, and Buffer support, ensuring full functionality on all browsers, React Native versions, and Node.js environments. This makes the package ideal for cross-platform projects, giving you the same developer experience with secure token handling and refresh logic regardless of the platform.
 
 ## Secure Storage Configuration (secureStorage)
 
@@ -38,7 +38,8 @@ The package is designed to work seamlessly in both web and React Native environm
 - **Platform-Optimized Storage**: React uses localStorage, React Native uses AsyncStorage
 - **Memory + Persistent Storage**: Dual-layer storage for security and persistence
 - **Automatic Cleanup**: Expired tokens are automatically removed
-- **Cross-Platform Support**: Works securely on both React and React Native
+- **Cross-Platform Support**: Works securely on all browsers, React Native versions, and Node.js
+- **Universal Polyfills**: Automatic polyfill support ensures encryption works everywhere
 - **Zero Configuration**: Secure storage is configured automatically with secure defaults
 - **Random Key Generation**: Cryptographically secure random keys generated automatically
 
@@ -108,7 +109,7 @@ export default API;
 6. **Regular Key Rotation**: Consider rotating encryption keys periodically
 7. **Monitor for Tampering**: The library automatically detects tampering attempts
 8. **Secure Key Storage**: Store encryption keys securely (environment variables, secure vaults)
-9. **Automatic Polyfills**: The package automatically includes Web Crypto API polyfills for environments that don't support it natively
+9. **Comprehensive Polyfills**: The package automatically includes all necessary polyfills (Web Crypto API, TextEncoder/TextDecoder, Buffer) for universal compatibility
 
 ### Browser Compatibility
 
@@ -121,32 +122,34 @@ export default API;
 | Internet Explorer | ✅ (Polyfill)  | ✅                 | Fully Supported |
 | Opera             | ✅             | ✅                 | Fully Supported |
 
-*All browsers: Uses automatic polyfill for Web Crypto API support when needed*
+_All browsers: Uses automatic polyfill for Web Crypto API support when needed_
 
 ### Server-Side Rendering (SSR) Support
 
 `axios-spring` is designed to work seamlessly in both client and server environments:
 
 - **Next.js App Router**: Fully supported with automatic environment detection
-- **Next.js Pages Router**: Supported with proper polyfills
-- **Node.js**: Supported with built-in Buffer polyfills
+- **Next.js Pages Router**: Supported with comprehensive polyfills
+- **Node.js**: Supported with automatic polyfill detection
 - **Vite/Webpack**: Automatic polyfill detection and fallbacks
+- **All Environments**: Universal compatibility with automatic polyfill support
 
 #### Automatic Polyfill Support
 
-`axios-spring` automatically includes and configures Web Crypto API polyfills for environments that don't support it natively. **No additional setup required!**
+`axios-spring` automatically includes and configures comprehensive polyfills for all required APIs. **No additional setup required!**
 
 - **SSR Environments**: Automatically polyfilled for Next.js, Node.js, and other server environments
-- **Legacy Browsers**: Automatic fallback for older browsers without Web Crypto API
+- **Legacy Browsers**: Automatic fallback for older browsers without modern APIs
 - **React Native**: Works out of the box with automatic polyfill detection for all versions
 - **Zero Configuration**: No bundler configuration or manual polyfill setup needed
-- **Universal Support**: All platforms now support full encryption functionality
+- **Universal Support**: All platforms now support full functionality with comprehensive polyfills
 
-The package includes `@peculiar/webcrypto` as a dependency and automatically sets up polyfills when imported, ensuring secure encryption works everywhere.
+The package includes comprehensive polyfill dependencies (`@peculiar/webcrypto`, `fast-text-encoding`, `buffer`) and automatically sets up all necessary polyfills when imported, ensuring full functionality works everywhere.
 
 ### Polyfill Details
 
 The automatic polyfill system provides comprehensive support for all required APIs:
+
 - **Web Crypto API**: Uses `@peculiar/webcrypto` for cryptographic operations
 - **TextEncoder/TextDecoder**: Uses `fast-text-encoding` for string encoding/decoding
 - **Buffer**: Uses `buffer` polyfill for Node.js Buffer compatibility
@@ -162,7 +165,7 @@ The automatic polyfill system provides comprehensive support for all required AP
 | ------------ | -------------- | ------------------ | ------------ | --------------- |
 | All Versions | ✅             | ✅                 | ✅           | Fully Supported |
 
-*All React Native versions: Uses automatic polyfill for Web Crypto API support when needed*
+_All React Native versions: Uses automatic polyfill for Web Crypto API support when needed_
 
 ## Installation
 
@@ -413,12 +416,16 @@ export default API;
 
 ## Notes
 
-1. Designed to work seamlessly with JWT authentication
-2. The package assumes your tokens are JWT format for expiration checking
-3. The token refresh queue ensures no duplicate refresh requests are made
-4. You must manage token storage in your application code
-5. Compatible with both browser and React Native environments
-6. Automatic runtime detection ensures cross-platform compatibility
+1. **JWT Authentication**: Designed to work seamlessly with JWT authentication
+2. **Token Format**: The package assumes your tokens are JWT format for expiration checking
+3. **Request Queuing**: The token refresh queue ensures no duplicate refresh requests are made
+4. **Token Management**: You must manage token storage in your application code using the provided methods
+5. **Universal Compatibility**: Works on all browsers, React Native versions, and Node.js environments
+6. **Automatic Polyfills**: Comprehensive polyfill support ensures all features work everywhere
+7. **Zero Configuration**: No additional setup required - polyfills load automatically when needed
+8. **Cross-Platform**: Automatic runtime detection ensures seamless cross-platform compatibility
+9. **Security First**: Always-on encryption with enterprise-grade security features
+10. **Performance Optimized**: Polyfills only load in environments that need them
 
 ## Acknowledgements
 
@@ -427,4 +434,7 @@ Special thanks to:
 - The [Axios team](https://github.com/axios/axios) for the excellent HTTP client
 - The team behind [`@react-native-async-storage/async-storage`](https://github.com/react-native-async-storage/async-storage) for providing secure, persistent storage in React Native
 - The [JSON Web Token (jsonwebtoken)](https://github.com/auth0/node-jsonwebtoken) project for enabling secure and compact token-based authentication
+- The [`@peculiar/webcrypto`](https://github.com/PeculiarVentures/webcrypto) team for providing comprehensive Web Crypto API polyfills
+- The [`fast-text-encoding`](https://github.com/samthor/fast-text-encoding) project for efficient TextEncoder/TextDecoder polyfills
+- The [`buffer`](https://github.com/feross/buffer) project for Node.js Buffer compatibility in browsers
 - All contributors and users for their continuous support and feedback

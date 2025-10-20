@@ -129,7 +129,6 @@ _All browsers: Uses automatic polyfill for Web Crypto API support when needed_
 - **Node.js**: Supported with automatic polyfill detection
 - **Vite/Webpack**: Automatic polyfill detection and fallbacks
 
-
 ### React Native Compatibility
 
 | React Native | Web Crypto API | Encryption Support | AsyncStorage | Status          |
@@ -401,7 +400,7 @@ export default API;
 The package automatically includes polyfills for environments that don't support modern APIs:
 
 - **Web Crypto API**: For cryptographic operations (Internet Explorer, older browsers)
-- **TextEncoder/TextDecoder**: For string encoding/decoding (Internet Explorer, older browsers)  
+- **TextEncoder/TextDecoder**: For string encoding/decoding (Internet Explorer, older browsers)
 - **Buffer**: For Node.js Buffer compatibility in browsers
 
 Polyfills are loaded automatically only when needed, with no additional configuration required.

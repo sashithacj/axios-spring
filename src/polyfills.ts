@@ -115,5 +115,5 @@ export function setupAllPolyfills(): void {
 // Legacy export for backward compatibility
 export { setupAllPolyfills as setupWebCryptoPolyfill };
 
-// Automatically setup polyfill when this module is imported
-setupWebCryptoPolyfill();
+// Automatically setup all polyfills when this module is imported
+setupAllPolyfills();

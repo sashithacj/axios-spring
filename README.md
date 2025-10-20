@@ -1,30 +1,27 @@
 # axios-spring
 
-A smart Axios wrapper with automatic JWT refresh flow built for React Native and React (Next.js-friendly) with universal compatibility and comprehensive automatic polyfill support 🌱
+A smart Axios wrapper with automatic JWT refresh flow built for React Native and React (Next.js-friendly) 🌱
 
 ## Features
 
-- Automatic JWT token refresh before expiration
-- Request queuing during token refresh
-- Configurable token expiry buffer
-- 401 response handling with automatic retry
-- Refresh failure callback for custom error handling
-- Always-on enterprise-grade AES-GCM encryption
-- HMAC integrity verification for tamper detection
-- Secure key derivation using PBKDF2
-- Automatic memory cleanup and token expiry
-- Cross-platform secure storage (React/React Native)
-- Comprehensive automatic polyfill support (Web Crypto API, TextEncoder/TextDecoder, Buffer)
-- Customizable access token attachment
-- Customizable refresh token attachment
-- Customizable tokens extraction
-- TypeScript support
+- **Automatic JWT token refresh** before expiration
+- **Request queuing** during token refresh to prevent duplicate requests
+- **Configurable token expiry buffer** for proactive refresh timing
+- **401 response handling** with automatic retry after token refresh
+- **Refresh failure callback** for custom error handling and user redirection
+- **Enterprise-grade security** with AES-GCM encryption and HMAC integrity verification
+- **Secure key derivation** using PBKDF2 with 100,000 iterations
+- **Automatic memory cleanup** and token expiry management
+- **Cross-platform storage** (localStorage for React, AsyncStorage for React Native)
+- **Customizable token handling** (attachment, extraction, and refresh logic)
+- **TypeScript support** with comprehensive type definitions
+- **Universal compatibility** with automatic polyfill support for all environments
 
 ## How this works
 
 This package wraps an Axios instance with automatic JWT authentication and token refreshing logic. When you make a request, it checks if the access token is valid (with a configurable buffer window). If the token is expired, it will automatically attempt to refresh it using the provided refresh token and endpoint. You can also plug in custom logic to attach tokens to requests, extract new tokens from responses, and define exactly how requests should behave during refresh cycles. All tokens are securely stored and reused across requests without you needing to manage them manually.
 
-The package is designed to work seamlessly across all environments with comprehensive automatic polyfill support. It detects the runtime and automatically selects the appropriate storage backend: for web apps, it uses localStorage; for React Native, it uses @react-native-async-storage/async-storage. The package automatically loads necessary polyfills for Web Crypto API, TextEncoder/TextDecoder, and Buffer support, ensuring full functionality on all browsers, React Native versions, and Node.js environments. This makes the package ideal for cross-platform projects, giving you the same developer experience with secure token handling and refresh logic regardless of the platform.
+The package is designed to work seamlessly in both web and React Native environments. It detects the runtime and automatically selects the appropriate storage backend: for web apps, it uses localStorage; for React Native, it uses @react-native-async-storage/async-storage. This makes the package ideal for cross-platform projects, giving you the same developer experience with secure token handling and refresh logic regardless of the platform.
 
 ## Secure Storage Configuration (secureStorage)
 
@@ -39,7 +36,6 @@ The package is designed to work seamlessly across all environments with comprehe
 - **Memory + Persistent Storage**: Dual-layer storage for security and persistence
 - **Automatic Cleanup**: Expired tokens are automatically removed
 - **Cross-Platform Support**: Works securely on all browsers, React Native versions, and Node.js
-- **Universal Polyfills**: Automatic polyfill support ensures encryption works everywhere
 - **Zero Configuration**: Secure storage is configured automatically with secure defaults
 - **Random Key Generation**: Cryptographically secure random keys generated automatically
 
@@ -109,7 +105,7 @@ export default API;
 6. **Regular Key Rotation**: Consider rotating encryption keys periodically
 7. **Monitor for Tampering**: The library automatically detects tampering attempts
 8. **Secure Key Storage**: Store encryption keys securely (environment variables, secure vaults)
-9. **Comprehensive Polyfills**: The package automatically includes all necessary polyfills (Web Crypto API, TextEncoder/TextDecoder, Buffer) for universal compatibility
+9. **Universal Compatibility**: The package works on all platforms with automatic polyfill support
 
 ### Browser Compatibility
 
@@ -129,35 +125,10 @@ _All browsers: Uses automatic polyfill for Web Crypto API support when needed_
 `axios-spring` is designed to work seamlessly in both client and server environments:
 
 - **Next.js App Router**: Fully supported with automatic environment detection
-- **Next.js Pages Router**: Supported with comprehensive polyfills
+- **Next.js Pages Router**: Supported with automatic polyfills
 - **Node.js**: Supported with automatic polyfill detection
 - **Vite/Webpack**: Automatic polyfill detection and fallbacks
-- **All Environments**: Universal compatibility with automatic polyfill support
 
-#### Automatic Polyfill Support
-
-`axios-spring` automatically includes and configures comprehensive polyfills for all required APIs. **No additional setup required!**
-
-- **SSR Environments**: Automatically polyfilled for Next.js, Node.js, and other server environments
-- **Legacy Browsers**: Automatic fallback for older browsers without modern APIs
-- **React Native**: Works out of the box with automatic polyfill detection for all versions
-- **Zero Configuration**: No bundler configuration or manual polyfill setup needed
-- **Universal Support**: All platforms now support full functionality with comprehensive polyfills
-
-The package includes comprehensive polyfill dependencies (`@peculiar/webcrypto`, `fast-text-encoding`, `buffer`) and automatically sets up all necessary polyfills when imported, ensuring full functionality works everywhere.
-
-### Polyfill Details
-
-The automatic polyfill system provides comprehensive support for all required APIs:
-
-- **Web Crypto API**: Uses `@peculiar/webcrypto` for cryptographic operations
-- **TextEncoder/TextDecoder**: Uses `fast-text-encoding` for string encoding/decoding
-- **Buffer**: Uses `buffer` polyfill for Node.js Buffer compatibility
-- **Detects Environment**: Automatically detects which APIs are missing
-- **Loads Polyfills**: Dynamically loads polyfills only when needed
-- **Zero Bundle Impact**: Polyfills are only loaded in environments that need them
-- **Fallback Graceful**: Gracefully handles polyfill loading failures
-- **Universal Coverage**: Ensures all features work on all supported platforms
 
 ### React Native Compatibility
 
@@ -420,12 +391,20 @@ export default API;
 2. **Token Format**: The package assumes your tokens are JWT format for expiration checking
 3. **Request Queuing**: The token refresh queue ensures no duplicate refresh requests are made
 4. **Token Management**: You must manage token storage in your application code using the provided methods
-5. **Universal Compatibility**: Works on all browsers, React Native versions, and Node.js environments
-6. **Automatic Polyfills**: Comprehensive polyfill support ensures all features work everywhere
-7. **Zero Configuration**: No additional setup required - polyfills load automatically when needed
-8. **Cross-Platform**: Automatic runtime detection ensures seamless cross-platform compatibility
-9. **Security First**: Always-on encryption with enterprise-grade security features
-10. **Performance Optimized**: Polyfills only load in environments that need them
+5. **Cross-Platform**: Works on all browsers, React Native versions, and Node.js environments
+6. **Automatic Detection**: Runtime detection ensures seamless cross-platform compatibility
+7. **Security First**: Always-on encryption with enterprise-grade security features
+8. **Zero Configuration**: No additional setup required - works out of the box
+
+## Compatibility & Polyfills
+
+The package automatically includes polyfills for environments that don't support modern APIs:
+
+- **Web Crypto API**: For cryptographic operations (Internet Explorer, older browsers)
+- **TextEncoder/TextDecoder**: For string encoding/decoding (Internet Explorer, older browsers)  
+- **Buffer**: For Node.js Buffer compatibility in browsers
+
+Polyfills are loaded automatically only when needed, with no additional configuration required.
 
 ## Acknowledgements
 

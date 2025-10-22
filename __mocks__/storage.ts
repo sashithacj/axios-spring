@@ -6,7 +6,7 @@ const Storage = {
     const value = mockStorage[key] ?? null;
     return Promise.resolve(value);
   }),
-  setItem: jest.fn((key: string, value: string, expiresAt?: number) => {
+  setItem: jest.fn((key: string, value: string) => {
     mockStorage[key] = value;
     return Promise.resolve();
   }),
@@ -30,7 +30,7 @@ const Storage = {
       const value = mockStorage[key] ?? null;
       return Promise.resolve(value);
     });
-    Storage.setItem.mockImplementation((key: string, value: string, expiresAt?: number) => {
+    Storage.setItem.mockImplementation((key: string, value: string) => {
       mockStorage[key] = value;
       return Promise.resolve();
     });

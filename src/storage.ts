@@ -7,11 +7,12 @@ import {
   getRandomValues,
   generateRandomKey,
   generateRandomSalt,
+  isReactNative,
 } from './utils';
 
 type StorageInterface = {
   getItem: (key: string) => Promise<string | null>;
-  setItem: (key: string, value: string, expiresAt?: number) => Promise<void>;
+  setItem: (key: string, value: string) => Promise<void>;
   removeItem: (key: string) => Promise<void>;
   clear: () => Promise<void>;
 };
@@ -19,63 +20,20 @@ type StorageInterface = {
 type SecureStorageConfig = {
   encryptionKey?: string;
   keyDerivationSalt?: string;
-  maxAge?: number; // in milliseconds
-  autoCleanup?: boolean;
 };
 
-// Secure memory storage with automatic cleanup
 class SecureMemoryStorage {
-  private store: Map<string, { value: string; expires: number }> = new Map();
-  private cleanupInterval: NodeJS.Timeout | null = null;
+  private store: Map<string, string> = new Map();
 
-  constructor(private config: any = {}) {
-    if (config.autoCleanup !== false) {
-      this.startCleanup();
-    }
-  }
-
-  private startCleanup() {
-    // Clean up expired entries every 5 minutes
-    this.cleanupInterval = setInterval(
-      () => {
-        const now = Date.now();
-        for (const [key, entry] of this.store.entries()) {
-          if (entry.expires > 0 && entry.expires < now) {
-            this.store.delete(key);
-          }
-        }
-      },
-      5 * 60 * 1000,
-    );
-  }
-
-  private getExpiryTime(jwtExp?: number): number {
-    if (jwtExp) {
-      // Use JWT expiration time (convert from seconds to milliseconds)
-      return jwtExp * 1000;
-    }
-    // Fallback to maxAge if no JWT expiration provided
-    return this.config.maxAge ? Date.now() + this.config.maxAge : 0;
-  }
+  constructor(private config: any = {}) {}
 
   async getItem(key: string): Promise<string | null> {
-    const entry = this.store.get(key);
-    if (!entry) return null;
-
-    // Check if expired
-    if (entry.expires > 0 && entry.expires < Date.now()) {
-      this.store.delete(key);
-      return null;
-    }
-
-    return entry.value;
+    const value = this.store.get(key);
+    return value ?? null;
   }
 
-  async setItem(key: string, value: string, expiresAt?: number): Promise<void> {
-    this.store.set(key, {
-      value,
-      expires: this.getExpiryTime(expiresAt),
-    });
+  async setItem(key: string, value: string): Promise<void> {
+    this.store.set(key, value);
   }
 
   async removeItem(key: string): Promise<void> {
@@ -87,14 +45,10 @@ class SecureMemoryStorage {
   }
 
   destroy() {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-    }
     this.store.clear();
   }
 }
 
-// Secure encryption utilities using Web Crypto API
 class SecureEncryption {
   private static readonly ALGORITHM = 'AES-GCM';
   private static readonly KEY_LENGTH = 256;
@@ -114,7 +68,7 @@ class SecureEncryption {
         name: this.ALGORITHM,
         length: this.KEY_LENGTH,
       },
-      true, // extractable
+      true,
       ['encrypt', 'decrypt'],
     );
   }
@@ -138,7 +92,7 @@ class SecureEncryption {
       {
         name: 'PBKDF2',
         salt: salt.buffer as ArrayBuffer,
-        iterations: 100000, // OWASP recommended minimum
+        iterations: 100000,
         hash: 'SHA-256',
       },
       keyMaterial,
@@ -315,9 +269,9 @@ class SecureStorage implements StorageInterface {
     return this.decryptValue(encryptedValue);
   }
 
-  async setItem(key: string, value: string, expiresAt?: number): Promise<void> {
+  async setItem(key: string, value: string): Promise<void> {
     const encryptedValue = await this.encryptValue(value);
-    return this.memoryStorage.setItem(key, encryptedValue, expiresAt);
+    return this.memoryStorage.setItem(key, encryptedValue);
   }
 
   async removeItem(key: string): Promise<void> {
@@ -335,12 +289,10 @@ class SecureStorage implements StorageInterface {
 
 // Platform-specific secure storage implementations
 class BrowserSecureStorage implements StorageInterface {
-  private memoryStorage: SecureMemoryStorage;
   private encryptionKey: CryptoKey | null = null;
   private isEncryptionAvailable: boolean = false;
 
   constructor(private config: any = {}) {
-    this.memoryStorage = new SecureMemoryStorage(config);
     this.initializeEncryption();
   }
 
@@ -394,59 +346,35 @@ class BrowserSecureStorage implements StorageInterface {
   }
 
   async getItem(key: string): Promise<string | null> {
-    // Try localStorage first (persistent storage for React)
     const localValue = localStorage.getItem(key);
     if (localValue) {
-      // Also store in memory for better security
-      await this.memoryStorage.setItem(key, localValue);
       return this.decryptValue(localValue);
     }
-
-    // Fallback to memory storage
-    const memoryValue = await this.memoryStorage.getItem(key);
-    if (memoryValue) return this.decryptValue(memoryValue);
-
     return null;
   }
 
-  async setItem(key: string, value: string, expiresAt?: number): Promise<void> {
+  async setItem(key: string, value: string): Promise<void> {
     const encryptedValue = await this.encryptValue(value);
-
-    // Store in localStorage first (persistent storage for React)
-    try {
-      localStorage.setItem(key, encryptedValue);
-    } catch (error) {
-      // localStorage might be full or unavailable
-      console.warn('localStorage unavailable, using memory storage only:', error);
-    }
-
-    // Also store in memory for better security
-    await this.memoryStorage.setItem(key, encryptedValue, expiresAt);
+    localStorage.setItem(key, encryptedValue);
   }
 
   async removeItem(key: string): Promise<void> {
-    await this.memoryStorage.removeItem(key);
     localStorage.removeItem(key);
   }
 
   async clear(): Promise<void> {
-    await this.memoryStorage.clear();
     localStorage.clear();
   }
 
-  destroy() {
-    this.memoryStorage.destroy();
-  }
+  destroy() {}
 }
 
 class ReactNativeSecureStorage implements StorageInterface {
-  private memoryStorage: SecureMemoryStorage;
   private encryptionKey: CryptoKey | null = null;
   private isEncryptionAvailable: boolean = false;
   private AsyncStorage: any;
 
   constructor(private config: any = {}) {
-    this.memoryStorage = new SecureMemoryStorage(config);
     this.AsyncStorage = require('@react-native-async-storage/async-storage');
     this.initializeEncryption();
   }
@@ -501,48 +429,27 @@ class ReactNativeSecureStorage implements StorageInterface {
   }
 
   async getItem(key: string): Promise<string | null> {
-    // Try AsyncStorage first (persistent storage for React Native)
     const asyncValue = await this.AsyncStorage.getItem(key);
     if (asyncValue) {
-      // Also store in memory for better security
-      await this.memoryStorage.setItem(key, asyncValue, undefined);
       return this.decryptValue(asyncValue);
     }
-
-    // Fallback to memory storage
-    const memoryValue = await this.memoryStorage.getItem(key);
-    if (memoryValue) return this.decryptValue(memoryValue);
-
     return null;
   }
 
-  async setItem(key: string, value: string, expiresAt?: number): Promise<void> {
+  async setItem(key: string, value: string): Promise<void> {
     const encryptedValue = await this.encryptValue(value);
-
-    // Store in AsyncStorage first (persistent storage for React Native)
-    try {
-      await this.AsyncStorage.setItem(key, encryptedValue);
-    } catch (error) {
-      console.warn('AsyncStorage unavailable, using memory storage only:', error);
-    }
-
-    // Also store in memory for better security
-    await this.memoryStorage.setItem(key, encryptedValue, expiresAt);
+    await this.AsyncStorage.setItem(key, encryptedValue);
   }
 
   async removeItem(key: string): Promise<void> {
-    await this.memoryStorage.removeItem(key);
     await this.AsyncStorage.removeItem(key);
   }
 
   async clear(): Promise<void> {
-    await this.memoryStorage.clear();
     await this.AsyncStorage.clear();
   }
 
-  destroy() {
-    this.memoryStorage.destroy();
-  }
+  destroy() {}
 }
 
 let Storage: StorageInterface;
@@ -551,8 +458,6 @@ let currentStorageConfig: any = {};
 // Function to initialize storage with custom configuration
 export function initializeSecureStorage(config: SecureStorageConfig = {}) {
   currentStorageConfig = {
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours default
-    autoCleanup: true,
     ...config,
   } as any;
 
@@ -563,19 +468,18 @@ export function initializeSecureStorage(config: SecureStorageConfig = {}) {
   }
 
   // Check for React Native environment
-  try {
-    require('@react-native-async-storage/async-storage');
-    Storage = new ReactNativeSecureStorage(currentStorageConfig);
-    return Storage;
-  } catch {
-    // AsyncStorage not available, fallback to secure memory storage
+  if (isReactNative) {
+    try {
+      require('@react-native-async-storage/async-storage');
+      Storage = new ReactNativeSecureStorage(currentStorageConfig);
+      return Storage;
+    } catch {
+      // AsyncStorage not available, fallback to secure memory storage
+    }
   }
 
   // Fallback to secure memory storage (for testing or unsupported environments)
-  Storage = new SecureStorage({
-    ...currentStorageConfig,
-    maxAge: currentStorageConfig.maxAge || 60 * 60 * 1000, // 1 hour for testing
-  });
+  Storage = new SecureStorage(currentStorageConfig);
   return Storage;
 }
 

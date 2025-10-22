@@ -6,8 +6,6 @@ export { JwtPayload } from 'jsonwebtoken';
 export interface SecureStorageConfig {
   encryptionKey?: string;
   keyDerivationSalt?: string;
-  maxAge?: number; // in milliseconds
-  autoCleanup?: boolean;
 }
 
 export interface InitializeOptions extends Omit<CreateAxiosDefaults, 'baseURL'> {

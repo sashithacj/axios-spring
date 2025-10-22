@@ -11,7 +11,7 @@ A smart Axios wrapper with automatic JWT refresh flow built for React Native and
 - **Refresh failure callback** for custom error handling and user redirection
 - **Enterprise-grade security** with AES-GCM encryption and HMAC integrity verification
 - **Secure key derivation** using PBKDF2 with 100,000 iterations
-- **Automatic memory cleanup** and token expiry management
+- **JWT-based token expiry** management
 - **Cross-platform storage** (localStorage for React, AsyncStorage for React Native)
 - **Customizable token handling** (attachment, extraction, and refresh logic)
 - **TypeScript support** with comprehensive type definitions
@@ -34,7 +34,7 @@ The package is designed to work seamlessly in both web and React Native environm
 - **PBKDF2 Key Derivation**: Secure key generation with 100,000 iterations
 - **Platform-Optimized Storage**: React uses localStorage, React Native uses AsyncStorage
 - **Memory + Persistent Storage**: Dual-layer storage for security and persistence
-- **Automatic Cleanup**: Expired tokens are automatically removed
+- **JWT-Based Expiry**: Tokens respect their actual JWT expiration times
 - **Cross-Platform Support**: Works securely on all browsers, React Native versions, and Node.js
 - **Zero Configuration**: Secure storage is configured automatically with secure defaults
 - **Random Key Generation**: Cryptographically secure random keys generated automatically
@@ -52,25 +52,6 @@ const API = initializeApiInstance({
 export default API;
 ```
 
-### Custom Secure Storage Configuration (Optional)
-
-```typescript
-import { initializeApiInstance } from 'axios-spring';
-
-const API = initializeApiInstance({
-  baseUrl: 'https://your-api.com/v1/',
-  refreshEndpoint: 'auth/refresh',
-  secureStorage: {
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours (default: 24 hours)
-    autoCleanup: true, // Auto-cleanup expired tokens (default: true)
-    encryptionKey: 'your-secret-encryption-key', // Custom key (optional)
-    keyDerivationSalt: 'your-unique-salt', // Custom salt (optional)
-  },
-});
-
-export default API;
-```
-
 ### Advanced Security Configuration
 
 ```typescript
@@ -82,8 +63,6 @@ const API = initializeApiInstance({
   secureStorage: {
     encryptionKey: 'your-secret-encryption-key', // Custom encryption key
     keyDerivationSalt: 'your-unique-salt', // Custom salt for key derivation
-    maxAge: 12 * 60 * 60 * 1000, // 12 hours
-    autoCleanup: true,
   },
   onRefreshFailure: (error) => {
     // Handle refresh failures securely

@@ -1,13 +1,15 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import Storage, { initializeSecureStorage } from './storage';
+import { initializeSecureStorage } from './storage';
 import { decode, JwtPayload } from 'jsonwebtoken';
 import { AxiosSpringInstance, InitializeOptions, SecureStorageConfig } from './types';
 import { generateRandomKey, generateRandomSalt } from './utils';
+import Storage from './storage';
 
 type FailedRequest = {
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
 };
+
 
 type RefreshConfig = {
   accessKey: string;
@@ -54,15 +56,6 @@ function joinUrl(baseUrl: string, path: string): string {
   return baseUrl + path;
 }
 
-function extractJwtExpiration(token: string): number | undefined {
-  try {
-    const payload = decode(token) as JwtPayload;
-    return payload?.exp;
-  } catch (error) {
-    // If token is invalid, return undefined
-    return undefined;
-  }
-}
 
 async function refreshAuthToken(
   refreshAuthTokenConfig: RefreshConfig,
@@ -114,7 +107,10 @@ async function ensureFreshAccessToken(
   const timeLeft = decoded.exp - currentTime;
   const state = refreshingStateMap.get(API)!;
 
-  if (timeLeft > tokenExpiryBufferSeconds) return accessToken;
+  if (timeLeft <= tokenExpiryBufferSeconds) {
+  } else {
+    return accessToken;
+  }
 
   if (!state.isRefreshing) {
     state.isRefreshing = true;
@@ -163,15 +159,10 @@ export function initializeApiInstance({
   const API = axios.create({ ...axiosConfigOptions, baseURL: baseUrl }) as AxiosSpringInstance;
   const refreshEndpointUrl = joinUrl(baseUrl, refreshEndpoint);
 
-  // Always initialize secure storage with defaults or custom configuration
   const defaultSecureStorage = {
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    autoCleanup: true,
-    // Generate random encryption key if not provided
     encryptionKey: secureStorage?.encryptionKey || generateRandomKey(),
-    // Generate random salt if not provided
     keyDerivationSalt: secureStorage?.keyDerivationSalt || generateRandomSalt(),
-    ...secureStorage, // Override with user-provided config
+    ...secureStorage,
   };
 
   initializeSecureStorage(defaultSecureStorage);
@@ -212,13 +203,8 @@ export function initializeApiInstance({
     const accessKey = (API as any)[ACCESS_KEY];
     const refreshKey = (API as any)[REFRESH_KEY];
 
-    // Extract JWT expiration times
-    const accessTokenExp = extractJwtExpiration(accessToken);
-    const refreshTokenExp = extractJwtExpiration(refreshToken);
-
-    // Store tokens with their respective expiration times
-    await Storage.setItem(accessKey, accessToken, accessTokenExp);
-    await Storage.setItem(refreshKey, refreshToken, refreshTokenExp);
+    await Storage.setItem(accessKey, accessToken);
+    await Storage.setItem(refreshKey, refreshToken);
   };
 
   API.deleteAuthTokens = async () => {

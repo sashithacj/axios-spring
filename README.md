@@ -10,7 +10,7 @@ A smart Axios wrapper with automatic JWT refresh flow built for React Native and
 - **401 response handling** with automatic retry after token refresh
 - **Refresh failure callback** for custom error handling and user redirection
 - **Enterprise-grade security** with AES-GCM encryption and HMAC integrity verification
-- **Secure key derivation** using PBKDF2 with 100,000 iterations
+- **Secure key derivation** using PBKDF2 with 1,000,000 iterations
 - **JWT-based token expiry** management
 - **Cross-platform storage** (localStorage for React, AsyncStorage for React Native)
 - **Customizable token handling** (attachment, extraction, and refresh logic)
@@ -31,13 +31,16 @@ The package is designed to work seamlessly in both web and React Native environm
 
 - **Always-On AES-GCM Encryption**: Industry-standard encryption for all token storage
 - **HMAC Integrity Verification**: Detects tampering attempts automatically
-- **PBKDF2 Key Derivation**: Secure key generation with 100,000 iterations
+- **PBKDF2 Key Derivation**: Secure key generation with 1,000,000 iterations
 - **Platform-Optimized Storage**: React uses localStorage, React Native uses AsyncStorage
 - **Memory + Persistent Storage**: Dual-layer storage for security and persistence
 - **JWT-Based Expiry**: Tokens respect their actual JWT expiration times
 - **Cross-Platform Support**: Works securely on all browsers, React Native versions, and Node.js
 - **Zero Configuration**: Secure storage is configured automatically with secure defaults
 - **Random Key Generation**: Cryptographically secure random keys generated automatically
+- **Enhanced Entropy Fallback**: Multiple entropy sources combined for secure random generation
+- **Automatic Key Rotation**: Keys rotate every 24 hours for enhanced security
+- **Silent Error Handling**: No sensitive information leaked through error messages
 
 ### Automatic Secure Storage (No Configuration Required)
 

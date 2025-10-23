@@ -18,12 +18,24 @@ const Storage = {
     Object.keys(mockStorage).forEach((key) => delete mockStorage[key]);
     return Promise.resolve();
   }),
+  createKeyEscrow: jest.fn(() => {
+    return Promise.resolve({
+      keyData: 'mock-key-data',
+      saltData: 'mock-salt-data',
+      version: 1
+    });
+  }),
+  restoreFromEscrow: jest.fn((escrowData: any) => {
+    return Promise.resolve();
+  }),
   __reset: () => {
     Object.keys(mockStorage).forEach((key) => delete mockStorage[key]);
     Storage.getItem.mockClear();
     Storage.setItem.mockClear();
     Storage.removeItem.mockClear();
     Storage.clear.mockClear();
+    Storage.createKeyEscrow.mockClear();
+    Storage.restoreFromEscrow.mockClear();
 
     // Restore implementations
     Storage.getItem.mockImplementation((key: string) => {
@@ -40,6 +52,16 @@ const Storage = {
     });
     Storage.clear.mockImplementation(() => {
       Object.keys(mockStorage).forEach((key) => delete mockStorage[key]);
+      return Promise.resolve();
+    });
+    Storage.createKeyEscrow.mockImplementation(() => {
+      return Promise.resolve({
+        keyData: 'mock-key-data',
+        saltData: 'mock-salt-data',
+        version: 1
+      });
+    });
+    Storage.restoreFromEscrow.mockImplementation((escrowData: any) => {
       return Promise.resolve();
     });
   },

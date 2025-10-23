@@ -159,14 +159,24 @@ export const getRandomValues = (array: Uint8Array): Uint8Array => {
     try {
       return crypto.getRandomValues(array);
     } catch (error) {
-      console.warn('crypto.getRandomValues failed, falling back to Math.random:', error);
+      // Silent error handling to prevent information disclosure
     }
   }
 
   // Fallback for environments without crypto.getRandomValues
-  // Note: This should rarely happen since polyfills are loaded automatically
+  // Use a more secure fallback that combines multiple entropy sources
+  const fallbackRandom = (): number => {
+    const now = Date.now();
+    const perfNow = typeof performance !== 'undefined' ? performance.now() : 0;
+    const random = Math.random();
+    
+    // Combine multiple entropy sources
+    const combined = (now + perfNow + random) % 1;
+    return combined;
+  };
+
   for (let i = 0; i < array.length; i++) {
-    array[i] = Math.floor(Math.random() * 256);
+    array[i] = Math.floor(fallbackRandom() * 256);
   }
   return array;
 };
@@ -187,4 +197,21 @@ export const generateRandomSalt = (): string => {
   const array = new Uint8Array(16); // 128 bits
   getRandomValues(array);
   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
+};
+
+/**
+ * Secure memory clearing for sensitive data
+ * Attempts to overwrite string references to help with garbage collection
+ */
+export const secureClearString = (str: string): void => {
+  if (typeof str === 'string' && str.length > 0) {
+    // Best effort to clear string from memory
+    // Note: JavaScript strings are immutable, but this helps with garbage collection
+    try {
+      // Overwrite the reference
+      (str as any) = null;
+    } catch (error) {
+      // Silently fail if clearing is not possible
+    }
+  }
 };

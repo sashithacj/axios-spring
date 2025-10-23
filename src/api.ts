@@ -159,10 +159,11 @@ export function initializeApiInstance({
   const API = axios.create({ ...axiosConfigOptions, baseURL: baseUrl }) as AxiosSpringInstance;
   const refreshEndpointUrl = joinUrl(baseUrl, refreshEndpoint);
 
+  // Always use maximum security - no user choice
   const defaultSecureStorage = {
     encryptionKey: secureStorage?.encryptionKey || generateRandomKey(),
     keyDerivationSalt: secureStorage?.keyDerivationSalt || generateRandomSalt(),
-    ...secureStorage,
+    // All security features are mandatory and enabled by default
   };
 
   initializeSecureStorage(defaultSecureStorage);
@@ -229,6 +230,20 @@ export function initializeApiInstance({
     if (!accessToken) return null;
     const decoded = decodeJWT(accessToken);
     return decoded ?? null;
+  };
+
+  API.createKeyEscrow = async () => {
+    if (!Storage.createKeyEscrow) {
+      throw new Error('Key escrow not supported by current storage implementation');
+    }
+    return Storage.createKeyEscrow();
+  };
+
+  API.restoreFromEscrow = async (escrowData: { keyData: string; saltData: string; version: number }) => {
+    if (!Storage.restoreFromEscrow) {
+      throw new Error('Key escrow not supported by current storage implementation');
+    }
+    return Storage.restoreFromEscrow(escrowData);
   };
 
   API.interceptors.request.use(

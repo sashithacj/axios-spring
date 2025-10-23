@@ -429,7 +429,7 @@ describe('14. Utils Functions', () => {
     });
 
     it('✅ Should handle crypto.getRandomValues failure gracefully', () => {
-      // Mock console.warn to capture warning
+      // Mock console.warn to capture warning (should not be called due to security fix)
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
 
       (global as any).crypto = {
@@ -442,10 +442,8 @@ describe('14. Utils Functions', () => {
       const array = new Uint8Array(4);
       const result = getRandomValues(array);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'crypto.getRandomValues failed, falling back to Math.random:',
-        expect.any(Error),
-      );
+      // Should not log warnings due to security fix (silent error handling)
+      expect(consoleSpy).not.toHaveBeenCalled();
       expect(result).toBe(array);
       expect(result.length).toBe(4);
 

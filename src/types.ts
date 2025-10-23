@@ -35,4 +35,6 @@ export interface AxiosSpringInstance extends AxiosInstance {
   setAuthTokens: (accessToken: string, refreshToken: string) => Promise<void>;
   deleteAuthTokens: () => Promise<void>;
   isAuthenticated: () => Promise<JwtPayload | null>;
+  createKeyEscrow: () => Promise<{ keyData: string; saltData: string; version: number }>;
+  restoreFromEscrow: (escrowData: { keyData: string; saltData: string; version: number }) => Promise<void>;
 }

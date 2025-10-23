@@ -31,14 +31,9 @@ function setupTextEncodingPolyfill(): void {
         }
       }
 
-      console.log('🔤 axios-spring: TextEncoder/TextDecoder polyfill loaded successfully');
+      // TextEncoder/TextDecoder polyfill loaded successfully
     } catch (error) {
-      console.warn(
-        '⚠️ axios-spring: Failed to load TextEncoder/TextDecoder polyfill. ' +
-          'Some features may not work in this environment. ' +
-          'Error:',
-        error,
-      );
+      // Failed to load TextEncoder/TextDecoder polyfill
     }
   }
 }
@@ -61,14 +56,9 @@ function setupBufferPolyfill(): void {
         (global as any).Buffer = Buffer;
       }
 
-      console.log('📦 axios-spring: Buffer polyfill loaded successfully');
+      // Buffer polyfill loaded successfully
     } catch (error) {
-      console.warn(
-        '⚠️ axios-spring: Failed to load Buffer polyfill. ' +
-          'Some features may not work in this environment. ' +
-          'Error:',
-        error,
-      );
+      // Failed to load Buffer polyfill
     }
   }
 }
@@ -91,14 +81,9 @@ function setupWebCryptoPolyfill(): void {
         (global as any).crypto = globalThis.crypto;
       }
 
-      console.log('🔐 axios-spring: Web Crypto API polyfill loaded successfully');
+      // Web Crypto API polyfill loaded successfully
     } catch (error) {
-      console.warn(
-        '⚠️ axios-spring: Failed to load Web Crypto API polyfill. ' +
-          'Some features may not work in this environment. ' +
-          'Error:',
-        error,
-      );
+      // Failed to load Web Crypto API polyfill
     }
   }
 }

@@ -35,13 +35,10 @@ const refreshingStateMap = new WeakMap<
   }
 >();
 
-function decodeJWT(token: string): { exp: number } | null {
+function decodeJWT(token: string): JwtPayload | null {
   try {
     const decoded = decode(token) as JwtPayload | null;
-    if (decoded && typeof decoded.exp === 'number') {
-      return { exp: decoded.exp };
-    }
-    return null;
+    return decoded;
   } catch {
     return null;
   }
@@ -98,7 +95,7 @@ async function ensureFreshAccessToken(
   const decoded = decodeJWT(accessToken);
   const currentTime = Math.floor(Date.now() / 1000);
 
-  if (!decoded) return null;
+  if (!decoded || typeof decoded.exp !== 'number') return null;
 
   const timeLeft = decoded.exp - currentTime;
   const state = refreshingStateMap.get(API)!;

@@ -8,8 +8,16 @@ const Storage = require('../src/storage').default;
 
 export const mockAxios = new MockAdapter(axios);
 
-export const generateToken = (expiresInSeconds: number): string => {
-  return jwt.sign({ exp: Math.floor(Date.now() / 1000) + expiresInSeconds }, 'secret');
+export const generateToken = (expiresInSeconds: number, additionalPayload: any = {}): string => {
+  const payload = {
+    exp: Math.floor(Date.now() / 1000) + expiresInSeconds,
+    iat: Math.floor(Date.now() / 1000),
+    sub: 'test-user',
+    email: 'test@example.com',
+    role: 'user',
+    ...additionalPayload,
+  };
+  return jwt.sign(payload, 'secret');
 };
 
 export const createTestApi = (options: any = {}) => {

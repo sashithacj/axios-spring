@@ -20,6 +20,12 @@ describe('7. isAuthenticated() Behavior', () => {
 
     expect(result).not.toBeNull();
     expect(result!.exp).toBeGreaterThan(Date.now() / 1000);
+    // Verify that full JWT payload is returned, not just exp field
+    expect(result!.sub).toBe('test-user');
+    expect(result!.email).toBe('test@example.com');
+    expect(result!.role).toBe('user');
+    expect(result!.iat).toBeDefined();
+    expect(typeof result!.iat).toBe('number');
   });
 
   it('✅ Triggers refresh if token is expired but refreshable', async () => {
@@ -38,6 +44,12 @@ describe('7. isAuthenticated() Behavior', () => {
     const result = await api.isAuthenticated();
 
     expect(result).not.toBeNull();
+    // Verify that full JWT payload is returned after refresh
+    expect(result!.sub).toBe('test-user');
+    expect(result!.email).toBe('test@example.com');
+    expect(result!.role).toBe('user');
+    expect(result!.iat).toBeDefined();
+    expect(typeof result!.iat).toBe('number');
     expect(Storage.setItem).toHaveBeenCalledWith('@axios-spring-access-token', newAccessToken);
     expect(Storage.setItem).toHaveBeenCalledWith('@axios-spring-refresh-token', newRefreshToken);
   });

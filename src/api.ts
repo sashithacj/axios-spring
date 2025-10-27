@@ -113,6 +113,24 @@ async function ensureFreshAccessToken(
     } catch (err) {
       state.failedRequestsQueue.forEach(({ reject }) => reject(err));
       state.failedRequestsQueue = [];
+
+      // Check if refresh token is expired and remove tokens if so
+      try {
+        const refreshToken = await Storage.getItem(refreshAuthTokenConfig.refreshKey);
+        if (refreshToken) {
+          const decoded = decodeJWT(refreshToken);
+          const currentTime = Math.floor(Date.now() / 1000);
+
+          // If refresh token is expired (including checking if it has an exp claim)
+          if (decoded && typeof decoded.exp === 'number' && decoded.exp < currentTime) {
+            await Storage.removeItem(refreshAuthTokenConfig.accessKey);
+            await Storage.removeItem(refreshAuthTokenConfig.refreshKey);
+          }
+        }
+      } catch {
+        // If we can't check the refresh token, don't remove tokens
+      }
+
       if (onRefreshFailure) {
         onRefreshFailure(err);
       }

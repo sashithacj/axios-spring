@@ -156,5 +156,46 @@ describe('11. Refresh Failure Callback', () => {
         }),
       }),
     );
+    // Tokens should NOT be removed (network/API error, but refresh token itself is still valid)
+    expect(Storage.removeItem).not.toHaveBeenCalled();
+  });
+
+  it('✅ Tokens are removed when refresh token is expired on refresh failure', async () => {
+    const accessToken = generateToken(10); // will trigger refresh
+    const refreshToken = generateToken(-10); // expired refresh token
+
+    await api.setAuthTokens(accessToken, refreshToken);
+
+    // Mock refresh endpoint to return 500 error
+    mockAxios.onPost('https://api.test.com/auth/refresh').reply(500, {
+      error: 'Internal Server Error',
+    });
+
+    const result = await api.isAuthenticated();
+
+    expect(result).toBeNull();
+    expect(onRefreshFailureMock).toHaveBeenCalledTimes(1);
+    // Verify tokens ARE removed when refresh token is expired
+    expect(Storage.removeItem).toHaveBeenCalledWith('@axios-spring-access-token');
+    expect(Storage.removeItem).toHaveBeenCalledWith('@axios-spring-refresh-token');
+  });
+
+  it('✅ Tokens are NOT removed when refresh token is valid on network error', async () => {
+    const accessToken = generateToken(10); // will trigger refresh
+    const refreshToken = generateToken(600); // valid refresh token
+
+    await api.setAuthTokens(accessToken, refreshToken);
+
+    // Mock refresh endpoint to return 500 error
+    mockAxios.onPost('https://api.test.com/auth/refresh').reply(500, {
+      error: 'Internal Server Error',
+    });
+
+    const result = await api.isAuthenticated();
+
+    expect(result).toBeNull();
+    expect(onRefreshFailureMock).toHaveBeenCalledTimes(1);
+    // Verify tokens are NOT removed (network error, but refresh token is still valid)
+    expect(Storage.removeItem).not.toHaveBeenCalled();
   });
 });
